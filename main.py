@@ -112,6 +112,10 @@ if st.session_state.data_loaded:
         selected_species if selected_species != "All Species" else None,
         active_diseases
     )
+else:
+    # Initialize empty dataframes when data is not loaded
+    filtered_direct = pd.DataFrame()
+    filtered_indirect = pd.DataFrame()
 
 # Main dashboard layout
 col1, col2, col3, col4 = st.columns(4)
@@ -223,6 +227,7 @@ with tab2:
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                 filtered_direct.to_excel(writer, sheet_name='Direct_Interactions', index=False)
+                excel_buffer.seek(0)
             
             st.download_button(
                 label="📥 Download Direct Interactions Excel",
@@ -339,7 +344,7 @@ with tab3:
                         results = []
                         progress_bar = st.progress(0)
                         
-                        for idx, row in batch_df.iterrows():
+                        for i, (_, row) in enumerate(batch_df.iterrows(), 1):
                             result = predict_interaction(row['protein_a'], row['protein_b'], selected_model)
                             results.append({
                                 'protein_a': row['protein_a'],
@@ -347,7 +352,7 @@ with tab3:
                                 'confidence': result['confidence'],
                                 'prediction': 'Likely' if result['confidence'] > confidence_threshold else 'Unlikely'
                             })
-                            progress_bar.progress((idx + 1) / len(batch_df))
+                            progress_bar.progress(i / len(batch_df))
                         
                         results_df = pd.DataFrame(results)
                         st.dataframe(results_df)
