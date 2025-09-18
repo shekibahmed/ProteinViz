@@ -66,7 +66,7 @@ def get_known_interactions(df, query_protein, species=None, disease_contexts=Non
     
     # Filter by disease contexts
     if disease_contexts and 'disease_context' in filtered_df.columns:
-        disease_mask = pd.Series([False] * len(filtered_df))
+        disease_mask = pd.Series([False] * len(filtered_df), index=filtered_df.index)
         for disease in disease_contexts:
             disease_mask |= filtered_df['disease_context'].str.contains(
                 disease, case=False, na=False
