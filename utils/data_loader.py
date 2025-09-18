@@ -65,13 +65,16 @@ def get_known_interactions(df, query_protein, species=None, disease_contexts=Non
         ]
     
     # Filter by disease contexts
-    if disease_contexts and 'disease_context' in filtered_df.columns:
-        disease_mask = pd.Series([False] * len(filtered_df), index=filtered_df.index)
-        for disease in disease_contexts:
-            disease_mask |= filtered_df['disease_context'].str.contains(
-                disease, case=False, na=False
-            )
-        filtered_df = filtered_df[disease_mask]
+    if disease_contexts is not None and 'disease_context' in filtered_df.columns:
+        if not disease_contexts:  # Empty list means no contexts selected - show no data
+            filtered_df = filtered_df.iloc[0:0]  # Return empty DataFrame with same structure
+        else:
+            disease_mask = pd.Series([False] * len(filtered_df), index=filtered_df.index)
+            for disease in disease_contexts:
+                disease_mask |= filtered_df['disease_context'].str.contains(
+                    disease, case=False, na=False
+                )
+            filtered_df = filtered_df[disease_mask]
     
     return filtered_df.copy()
 
