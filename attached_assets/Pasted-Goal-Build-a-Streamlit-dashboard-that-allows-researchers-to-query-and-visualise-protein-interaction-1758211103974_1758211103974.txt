@@ -1,0 +1,29 @@
+Goal: Build a Streamlit dashboard that allows researchers to query and visualise protein interactions (direct binding partners and indirect effects) and to predict new interactions using state of the art models.
+Tasks:
+1.	Set up the environment:
+o	Create a new Python Repl and add a requirements.txt file listing the required packages: streamlit, pandas, numpy, scikit-learn, plotly, openpyxl, torch, dgl (or torch-geometric), transformers and any model specific dependencies.
+o	In main.py, import streamlit as st, pandas as pd, numpy as np, and the machine learning libraries.
+2.	Load and cache data:
+o	Use st.cache_data to load the EGCG_Direct_Interactions.csv and EGCG_Indirect_Effects.csv into Pandas DataFrames. Ensure that the column names (e.g., protein, gene, interaction_type, affinity, evidence_category, species, disease_context) are preserved.
+o	Add a function get_known_interactions(query_protein, species, disease) that filters these DataFrames based on the user’s query.
+3.	Implement feature extraction and models:
+o	Write a helper function to retrieve sequence and (optionally) structure data for a protein identifier. If no external API is available, mock this with placeholder sequences.
+o	Implement a simple baseline classifier using scikit learn (e.g., SVM or Random Forest) trained on existing interaction data pmc.ncbi.nlm.nih.gov.
+o	(Advanced) Include a GNN model for binary interaction prediction and a graph transformer + EGNN model for predicting PPI sites pmc.ncbi.nlm.nih.govarxiv.org. Load pre trained weights or train briefly on the uploaded datasets.
+o	Provide a function predict_interaction(proteinA, proteinB, model_type) that returns a confidence score and predicted interface residues.
+4.	Design the Streamlit interface:
+o	Use a sidebar for user inputs: text input for the query protein, select boxes for species (e.g., human, rat), checkboxes for disease contexts (neurodegenerative, anti aging, gut, cardiovascular) and radio buttons to choose the prediction model.
+o	Display summary metrics on the main page: number of known direct interactions, number of indirect effects, top 5 binding partners ranked by affinity, etc.
+o	Render interactive tables (st.dataframe) for direct and indirect interactions with built in filters (species, evidence type, disease). Provide a download button (st.download_button) to export filtered data as CSV/Excel.
+o	Add charts using Plotly: a bar chart of binding affinities (log scale) for known direct interactions and a pie chart showing the distribution of evidence categories. Use altair or box plots to visualise affinity distributions by evidence type.
+o	When the user requests a prediction for a new protein pair, display the predicted interaction probability and, if using a PPI site model, highlight the top predicted interface residues.
+5.	Enhance usability:
+o	Add caching to avoid re computing predictions when inputs haven’t changed.
+o	Use expandable sections (e.g., st.expander) to show/hide advanced model options or model explanation text. Streamlit supports st.expander and st.tabs for multi tab layouts.
+o	Include a README or in app documentation that explains the data sources, the meaning of direct vs. indirect interactions, and the underlying models.
+6.	Run the app:
+o	From the Replit shell, run pip install -r requirements.txt and streamlit run main.py. The app should open automatically in the browser. Verify that data tables and charts render correctly and that predictions appear when requested.
+7.	Iterate and polish:
+o	Adjust the layout for readability on different screen sizes.
+o	Profile the model functions for performance and consider using smaller neural models if resource limits are reached on Replit.
+o	Test the app with several protein queries to ensure reliability and accuracy.
