@@ -213,13 +213,17 @@ with tab2:
                 filtered_direct.head(max_results),
                 use_container_width=True
             )
-            
+        else:
+            st.info("No direct interactions found.")
+        
+        # Always show export buttons (even for empty results)
+        if st.session_state.data_loaded:
             # Download button for direct interactions
             csv_direct = filtered_direct.to_csv(index=False)
             st.download_button(
                 label="📥 Download Direct Interactions CSV",
                 data=csv_direct,
-                file_name=f"{query_protein}_direct_interactions.csv",
+                file_name=f"{query_protein or 'EGCG'}_direct_interactions.csv",
                 mime="text/csv"
             )
             
@@ -232,11 +236,9 @@ with tab2:
             st.download_button(
                 label="📥 Download Direct Interactions Excel",
                 data=excel_buffer.getvalue(),
-                file_name=f"{query_protein}_direct_interactions.xlsx",
+                file_name=f"{query_protein or 'EGCG'}_direct_interactions.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-        else:
-            st.info("No direct interactions found.")
     
     with col2:
         st.subheader("Indirect Effects")
@@ -245,17 +247,32 @@ with tab2:
                 filtered_indirect.head(max_results),
                 use_container_width=True
             )
-            
+        else:
+            st.info("No indirect effects found.")
+        
+        # Always show export buttons (even for empty results)
+        if st.session_state.data_loaded:
             # Download button for indirect effects
             csv_indirect = filtered_indirect.to_csv(index=False)
             st.download_button(
                 label="📥 Download Indirect Effects CSV",
                 data=csv_indirect,
-                file_name=f"{query_protein}_indirect_effects.csv",
+                file_name=f"{query_protein or 'EGCG'}_indirect_effects.csv",
                 mime="text/csv"
             )
-        else:
-            st.info("No indirect effects found.")
+            
+            # Excel download for indirect effects
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                filtered_indirect.to_excel(writer, sheet_name='Indirect_Effects', index=False)
+                excel_buffer.seek(0)
+            
+            st.download_button(
+                label="📥 Download Indirect Effects Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"{query_protein or 'EGCG'}_indirect_effects.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 with tab3:
     st.subheader("🔬 Protein Interaction Prediction")
