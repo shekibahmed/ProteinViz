@@ -26,13 +26,13 @@ args = "Streamlit Dashboard"
 name = "Streamlit Dashboard"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run main.py --server.port 5000"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app.py --server.port 5000"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
@@ -49,6 +49,10 @@ externalPort = 3002
 [[ports]]
 localPort = 37517
 externalPort = 3003
+
+[[ports]]
+localPort = 37539
+externalPort = 4200
 
 [[ports]]
 localPort = 40621
