@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
     "biopython>=1.85",
+    "ipython-genutils>=0.2.0",
     "joblib>=1.5.2",
     "networkx>=3.5",
     "numpy>=2.3.3",
@@ -12,11 +13,15 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=2.3.2",
     "plotly>=6.3.0",
+    "py3dmol>=2.5.2",
+    "rdkit>=2025.3.6",
     "requests>=2.32.5",
     "scikit-learn>=1.7.2",
     "scipy>=1.16.2",
+    "stmol>=0.0.9",
     "streamlit>=1.49.1",
     "torch>=2.8.0",
+    "widgetsnbextension>=3.5.2",
     "xmltodict>=1.0.2",
 ]
 

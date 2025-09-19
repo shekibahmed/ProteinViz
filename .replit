@@ -4,7 +4,7 @@ integrations = ["python_openai:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["glibcLocales", "libxcrypt", "pkg-config", "xsimd"]
+packages = ["cairo", "catch2", "comic-neue", "coordgenlibs", "eigen", "glibcLocales", "inchi", "libxcrypt", "maeparser", "pkg-config", "rapidjson", "xsimd"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -43,5 +43,13 @@ localPort = 34137
 externalPort = 3001
 
 [[ports]]
+localPort = 37517
+externalPort = 3003
+
+[[ports]]
 localPort = 40621
 externalPort = 3000
+
+[[ports]]
+localPort = 41965
+externalPort = 3002
