@@ -158,7 +158,7 @@ if st.session_state.data_loaded and len(filtered_direct) > 0:
     st.dataframe(top_partners, use_container_width=True)
 
 # Tabs for different views
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Visualizations", "📋 Data Tables", "🔬 ML Predictions", "🧬 Protein Info", "🔬 3D Structures", "📖 Documentation"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Visualizations", "🔬 3D Structures", "📋 Data Tables", "🔬 ML Predictions", "🧬 Protein Info", "📖 Documentation"])
 
 with tab1:
     if st.session_state.data_loaded:
@@ -206,73 +206,120 @@ with tab1:
         st.plotly_chart(fig_box, use_container_width=True)
 
 with tab2:
-    col1, col2 = st.columns(2)
+    st.subheader("🔬 3D Protein Structure Visualization")
+    
+    # Single protein structure viewer
+    st.write("### Individual Protein Structure Viewer")
+    
+    col1, col2 = st.columns([3, 1])
     
     with col1:
-        st.subheader("Direct Interactions")
-        if st.session_state.data_loaded and len(filtered_direct) > 0:
-            st.dataframe(
-                filtered_direct.head(max_results),
-                use_container_width=True
-            )
-        else:
-            st.info("No direct interactions found.")
-        
-        # Always show export buttons (even for empty results)
-        if st.session_state.data_loaded:
-            # Download button for direct interactions
-            csv_direct = filtered_direct.to_csv(index=False)
-            st.download_button(
-                label="📥 Download Direct Interactions CSV",
-                data=csv_direct,
-                file_name=f"{query_protein or 'EGCG'}_direct_interactions.csv",
-                mime="text/csv"
-            )
-            
-            # Excel download
-            excel_buffer = BytesIO()
-            filtered_direct.to_excel(excel_buffer, engine='openpyxl', sheet_name='Direct_Interactions', index=False)
-            excel_buffer.seek(0)
-            
-            st.download_button(
-                label="📥 Download Direct Interactions Excel",
-                data=excel_buffer.getvalue(),
-                file_name=f"{query_protein or 'EGCG'}_direct_interactions.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        structure_protein = st.text_input(
+            "Protein ID for 3D Structure",
+            value=query_protein if query_protein else "1A2C",
+            help="Enter PDB ID (4 characters) or UniProt ID for AlphaFold structure"
+        )
     
     with col2:
-        st.subheader("Indirect Effects")
-        if st.session_state.data_loaded and len(filtered_indirect) > 0:
-            st.dataframe(
-                filtered_indirect.head(max_results),
-                use_container_width=True
-            )
-        else:
-            st.info("No indirect effects found.")
+        st.write("")
+        st.write("")
+        view_structure = st.button("🔬 View 3D Structure", type="primary")
+    
+    if view_structure and structure_protein:
+        with st.spinner(f"Loading 3D structure for {structure_protein}..."):
+            try:
+                structure_data = get_structure_for_protein(structure_protein)
+                if structure_data:
+                    display_protein_structure_tab(structure_protein, structure_data)
+                else:
+                    st.warning(f"No 3D structure found for {structure_protein}. Please try:")
+                    st.write("- A valid 4-character PDB ID (e.g., 1A2C, 3HFM)")
+                    st.write("- A UniProt ID for AlphaFold structures (e.g., P53, EGFR)")
+            except Exception as e:
+                st.error(f"Error loading 3D structure: {str(e)}")
+    
+    # Structure comparison for protein pairs
+    st.write("### Protein Structure Comparison")
+    st.write("Compare the 3D structures of two proteins side by side:")
+    
+    col1, col2, col3 = st.columns([2, 2, 1])
+    
+    with col1:
+        protein_3d_a = st.text_input(
+            "First Protein",
+            value=query_protein if query_protein else "1A2C",
+            help="PDB ID or UniProt ID for first protein"
+        )
+    
+    with col2:
+        protein_3d_b = st.text_input(
+            "Second Protein",
+            value="P53",
+            help="PDB ID or UniProt ID for second protein"
+        )
+    
+    with col3:
+        st.write("")
+        st.write("")
+        compare_structures = st.button("🔄 Compare Structures")
+    
+    if compare_structures and protein_3d_a and protein_3d_b:
+        with st.spinner("Loading structures for comparison..."):
+            try:
+                display_structure_comparison(protein_3d_a, protein_3d_b)
+            except Exception as e:
+                st.error(f"Error comparing structures: {str(e)}")
+    
+    # 3D Interaction Network
+    st.write("### 3D Protein Interaction Network")
+    st.write("Visualize protein interaction networks in 3D space:")
+    
+    if st.session_state.data_loaded and len(filtered_direct) > 0:
+        # Extract protein pairs from filtered data
+        protein_pairs = []
+        predictions = []
         
-        # Always show export buttons (even for empty results)
-        if st.session_state.data_loaded:
-            # Download button for indirect effects
-            csv_indirect = filtered_indirect.to_csv(index=False)
-            st.download_button(
-                label="📥 Download Indirect Effects CSV",
-                data=csv_indirect,
-                file_name=f"{query_protein or 'EGCG'}_indirect_effects.csv",
-                mime="text/csv"
-            )
-            
-            # Excel download for indirect effects
-            excel_buffer_indirect = BytesIO()
-            filtered_indirect.to_excel(excel_buffer_indirect, engine='openpyxl', sheet_name='Indirect_Effects', index=False)
-            excel_buffer_indirect.seek(0)
-            
-            st.download_button(
-                label="📥 Download Indirect Effects Excel",
-                data=excel_buffer_indirect.getvalue(),
-                file_name=f"{query_protein or 'EGCG'}_indirect_effects.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        # Sample some interactions for network visualization
+        sample_size = min(10, len(filtered_direct))
+        sample_interactions = filtered_direct.head(sample_size)
+        
+        for _, row in sample_interactions.iterrows():
+            protein_pairs.append(("EGCG", row['protein']))
+            # Create mock prediction data for visualization
+            predictions.append({
+                'confidence': min(row.get('affinity', 1.0) / 10.0, 1.0),
+                'model_used': 'Known Interaction'
+            })
+        
+        if st.button("🕸️ Generate 3D Network"):
+            with st.spinner("Creating 3D interaction network..."):
+                try:
+                    display_interaction_network(protein_pairs, predictions)
+                except Exception as e:
+                    st.error(f"Error creating 3D network: {str(e)}")
+    else:
+        st.info("Load protein interaction data to generate 3D network visualizations.")
+    
+    # Information about 3D visualization features
+    with st.expander("ℹ️ About 3D Structure Visualization"):
+        st.write("""
+        **Features:**
+        - **Individual Structure Viewer**: View protein structures from PDB or AlphaFold
+        - **Structure Comparison**: Compare two proteins side by side
+        - **3D Interaction Networks**: Visualize protein interaction networks in 3D space
+        - **Interactive Controls**: Zoom, rotate, and customize visualization styles
+        - **Interface Residue Highlighting**: Highlight predicted interaction sites
+        
+        **Data Sources:**
+        - **PDB Database**: Experimentally determined structures (4-character IDs)
+        - **AlphaFold Database**: AI-predicted structures (UniProt IDs)
+        - **Real-time Fetching**: Structures are downloaded and cached automatically
+        
+        **Visualization Styles:**
+        - Cartoon, stick, sphere, and surface representations
+        - Multiple color schemes (spectrum, secondary structure, hydrophobicity)
+        - Customizable highlighting for interface residues
+        """)
 
 with tab3:
     st.subheader("🔬 Protein Interaction Prediction")
