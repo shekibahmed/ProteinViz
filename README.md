@@ -2,8 +2,6 @@
 
 A comprehensive Streamlit-based web application designed for researchers to query, visualize, and predict protein interactions with a focus on EGCG (Epigallocatechin gallate) compounds. This dashboard integrates machine learning capabilities with real-time data from multiple protein databases to provide insights into protein-protein interactions.
 
-![Dashboard Overview](screenshots/main_dashboard.png)
-*Main dashboard interface showing the sidebar controls and primary navigation*
 
 ## 🚀 Features
 
@@ -13,8 +11,6 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 - Visualization of binding affinities and evidence categories
 - Comparative analysis of direct vs indirect protein effects
 
-![Visualizations Tab](screenshots/visualizations_tab.png)
-*Data visualization interface with interactive charts and filtering options*
 
 ### 🔬 3D Protein Structure Viewer
 - Interactive 3D visualization of protein structures from PDB and AlphaFold databases
@@ -22,8 +18,6 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 - Side-by-side structure comparison for protein pairs
 - Integration with both experimental (PDB) and predicted (AlphaFold) structures
 
-![3D Structures Tab](screenshots/3d_structures_tab.png)
-*3D protein structure viewer with comparison capabilities*
 
 ### 🧠 Machine Learning Predictions
 - Advanced ML models for predicting protein-protein interactions
@@ -32,8 +26,6 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 - Interface residue prediction for interaction sites
 - Confidence scoring and model explanations
 
-![ML Predictions Tab](screenshots/ml_predictions_tab.png)
-*Machine learning interface for protein interaction predictions*
 
 ### 🧬 Comprehensive Protein Information
 - Real-time protein sequence retrieval from UniProt
@@ -41,8 +33,6 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 - Gene name mapping and protein family information
 - Integration with multiple protein databases
 
-![Protein Info Tab](screenshots/protein_info_tab.png)
-*Comprehensive protein information lookup interface*
 
 ### 📋 Data Management
 - Built-in data tables for direct and indirect protein interactions
@@ -50,8 +40,6 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 - Data validation and error handling
 - Support for custom datasets
 
-![Data Tables Tab](screenshots/data_tables_tab.png)
-*Data tables showing protein interaction datasets*
 
 ## 🗄️ Data Sources
 
