@@ -217,13 +217,14 @@ with tab2:
         structure_protein = st.text_input(
             "Protein ID for 3D Structure",
             value=query_protein if query_protein else "1A2C",
-            help="Enter PDB ID (4 characters) or UniProt ID for AlphaFold structure"
+            help="Enter PDB ID (4 characters) or UniProt ID for AlphaFold structure",
+            key="3d_structure_input"
         )
     
     with col2:
         st.write("")
         st.write("")
-        view_structure = st.button("🔬 View 3D Structure", type="primary")
+        view_structure = st.button("🔬 View 3D Structure", type="primary", key="3d_view_structure_btn")
     
     if view_structure and structure_protein:
         with st.spinner(f"Loading 3D structure for {structure_protein}..."):
@@ -248,20 +249,22 @@ with tab2:
         protein_3d_a = st.text_input(
             "First Protein",
             value=query_protein if query_protein else "1A2C",
-            help="PDB ID or UniProt ID for first protein"
+            help="PDB ID or UniProt ID for first protein",
+            key="3d_compare_protein_a"
         )
     
     with col2:
         protein_3d_b = st.text_input(
             "Second Protein",
             value="P53",
-            help="PDB ID or UniProt ID for second protein"
+            help="PDB ID or UniProt ID for second protein",
+            key="3d_compare_protein_b"
         )
     
     with col3:
         st.write("")
         st.write("")
-        compare_structures = st.button("🔄 Compare Structures")
+        compare_structures = st.button("🔄 Compare Structures", key="3d_compare_structures_btn")
     
     if compare_structures and protein_3d_a and protein_3d_b:
         with st.spinner("Loading structures for comparison..."):
@@ -291,7 +294,7 @@ with tab2:
                 'model_used': 'Known Interaction'
             })
         
-        if st.button("🕸️ Generate 3D Network"):
+        if st.button("🕸️ Generate 3D Network", key="3d_generate_network_btn"):
             with st.spinner("Creating 3D interaction network..."):
                 try:
                     display_interaction_network(protein_pairs, predictions)
@@ -330,17 +333,19 @@ with tab3:
         protein_a = st.text_input(
             "Protein A",
             value=query_protein,
-            help="Enter the first protein identifier"
+            help="Enter the first protein identifier",
+            key="ml_prediction_protein_a"
         )
     
     with col2:
         protein_b = st.text_input(
             "Protein B",
             value="P53",
-            help="Enter the second protein identifier"
+            help="Enter the second protein identifier",
+            key="ml_prediction_protein_b"
         )
     
-    if st.button("🚀 Predict Interaction", type="primary"):
+    if st.button("🚀 Predict Interaction", type="primary", key="ml_predict_interaction_btn"):
         if protein_a and protein_b:
             with st.spinner("Predicting protein interaction..."):
                 try:
@@ -404,7 +409,7 @@ with tab3:
             try:
                 batch_df = pd.read_csv(uploaded_file)
                 if 'protein_a' in batch_df.columns and 'protein_b' in batch_df.columns:
-                    if st.button("Run Batch Prediction"):
+                    if st.button("Run Batch Prediction", key="ml_batch_predictions_btn"):
                         results = []
                         progress_bar = st.progress(0)
                         
@@ -446,13 +451,14 @@ with tab4:
         lookup_protein = st.text_input(
             "Protein Identifier",
             value=query_protein if query_protein else "P53",
-            help="Enter UniProt ID, gene name, or other protein identifier"
+            help="Enter UniProt ID, gene name, or other protein identifier",
+            key="tab4_protein_lookup"
         )
     
     with col2:
         st.write("")
         st.write("")
-        lookup_button = st.button("🔍 Lookup Protein", type="primary")
+        lookup_button = st.button("🔍 Lookup Protein", type="primary", key="tab4_lookup_btn")
     
     if lookup_button and lookup_protein:
         with st.spinner("Retrieving comprehensive protein information..."):
@@ -571,13 +577,14 @@ with tab5:
         lookup_protein = st.text_input(
             "Protein Identifier",
             value=query_protein if query_protein else "P53",
-            help="Enter UniProt ID, gene name, or other protein identifier"
+            help="Enter UniProt ID, gene name, or other protein identifier",
+            key="tab5_protein_lookup"
         )
     
     with col2:
         st.write("")
         st.write("")
-        lookup_button = st.button("🔍 Lookup Protein", type="primary")
+        lookup_button = st.button("🔍 Lookup Protein", type="primary", key="tab5_lookup_btn")
     
     if lookup_button and lookup_protein:
         with st.spinner("Retrieving comprehensive protein information..."):
