@@ -136,11 +136,10 @@ with col2:
 with col3:
     if st.session_state.data_loaded and len(filtered_direct) > 0:
         avg_affinity = filtered_direct['affinity'].mean()
-        avg_affinity_value = avg_affinity if not pd.isna(avg_affinity) else None
-        st.metric(
-            "Avg Binding Affinity",
-            f"{avg_affinity_value:.2f}" if avg_affinity_value is not None else "N/A"
-        )
+        if not pd.isna(avg_affinity):
+            st.metric("Avg Binding Affinity", f"{avg_affinity:.2f}")
+        else:
+            st.metric("Avg Binding Affinity", "N/A")
     else:
         st.metric("Avg Binding Affinity", "N/A")
 
@@ -289,8 +288,13 @@ with tab2:
         for _, row in sample_interactions.iterrows():
             protein_pairs.append(("EGCG", row['protein']))
             # Create mock prediction data for visualization
+            affinity_value = row.get('affinity', 1.0)
+            if affinity_value is not None:
+                confidence = min(float(affinity_value) / 10.0, 1.0)
+            else:
+                confidence = 0.5
             predictions.append({
-                'confidence': min(row.get('affinity', 1.0) / 10.0, 1.0),
+                'confidence': confidence,
                 'model_used': 'Known Interaction'
             })
         
@@ -566,120 +570,206 @@ with tab4:
         st.info("Click 'Lookup Protein' to retrieve comprehensive information from UniProt and PDB databases.")
 
 with tab5:
-    st.subheader("🧬 Comprehensive Protein Information")
+    st.subheader("📋 Protein Interaction Data Tables")
     
-    # Protein lookup section
-    st.write("Enter a protein identifier to retrieve comprehensive information from UniProt and PDB databases:")
-    
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        lookup_protein = st.text_input(
-            "Protein Identifier",
-            value=query_protein if query_protein else "P53",
-            help="Enter UniProt ID, gene name, or other protein identifier",
-            key="tab5_protein_lookup"
-        )
-    
-    with col2:
-        st.write("")
-        st.write("")
-        lookup_button = st.button("🔍 Lookup Protein", type="primary", key="tab5_lookup_btn")
-    
-    if lookup_button and lookup_protein:
-        with st.spinner("Retrieving comprehensive protein information..."):
-            try:
-                protein_info = get_protein_info(lookup_protein)
-                
-                # Display basic information
-                st.subheader(f"Basic Information for {lookup_protein.upper()}")
-                
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.metric("Sequence Length", protein_info['sequence_length'])
-                
-                with col2:
-                    if protein_info['molecular_weight'] > 0:
-                        st.metric("Molecular Weight", f"{protein_info['molecular_weight']:.1f} Da")
+    if st.session_state.data_loaded:
+        # Data export controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            export_format = st.selectbox(
+                "Export Format",
+                ["CSV", "Excel", "TSV"],
+                help="Choose format for data export"
+            )
+        
+        with col2:
+            show_rows = st.number_input(
+                "Rows to Display",
+                min_value=10,
+                max_value=1000,
+                value=50,
+                step=10,
+                help="Number of rows to show in each table"
+            )
+        
+        with col3:
+            st.write("")
+            st.write("")
+            if st.button("📥 Export All Data", type="primary"):
+                # Create export data
+                if export_format == "CSV":
+                    direct_csv = filtered_direct.to_csv(index=False)
+                    indirect_csv = filtered_indirect.to_csv(index=False)
+                    st.download_button(
+                        "⬇️ Download Direct Interactions CSV",
+                        direct_csv,
+                        "direct_interactions.csv",
+                        "text/csv"
+                    )
+                    st.download_button(
+                        "⬇️ Download Indirect Effects CSV", 
+                        indirect_csv,
+                        "indirect_effects.csv",
+                        "text/csv"
+                    )
+        
+        # Direct Interactions Table
+        st.subheader(f"🔗 Direct Interactions ({len(filtered_direct)} entries)")
+        
+        if len(filtered_direct) > 0:
+            # Show summary stats
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Interactions", len(filtered_direct))
+            with col2:
+                avg_affinity = filtered_direct['affinity'].mean()
+                if not pd.isna(avg_affinity):
+                    st.metric("Avg Affinity", f"{float(avg_affinity):.2f}")
+                else:
+                    st.metric("Avg Affinity", "N/A")
+            with col3:
+                unique_proteins = int(filtered_direct['protein'].nunique())
+                st.metric("Unique Proteins", unique_proteins)
+            with col4:
+                unique_evidence = int(filtered_direct['evidence_category'].nunique())
+                st.metric("Evidence Types", unique_evidence)
+            
+            # Table controls
+            col1, col2 = st.columns(2)
+            with col1:
+                sort_column = st.selectbox(
+                    "Sort by Column",
+                    filtered_direct.columns.tolist(),
+                    index=list(filtered_direct.columns).index('affinity') if 'affinity' in filtered_direct.columns else 0
+                )
+            with col2:
+                sort_order = st.selectbox(
+                    "Sort Order",
+                    ["Descending", "Ascending"]
+                )
+            
+            # Apply sorting
+            ascending = sort_order == "Ascending"
+            sorted_direct = filtered_direct.sort_values(by=sort_column, ascending=ascending)
+            
+            # Display table
+            st.dataframe(
+                sorted_direct.head(show_rows),
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            if len(filtered_direct) > show_rows:
+                st.info(f"Showing first {show_rows} rows of {len(filtered_direct)} total entries. Adjust 'Rows to Display' to see more.")
+        else:
+            st.info("No direct interactions found for the current filters.")
+        
+        # Indirect Effects Table
+        st.subheader(f"🔄 Indirect Effects ({len(filtered_indirect)} entries)")
+        
+        if not filtered_indirect.empty:
+            # Show summary stats
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Effects", len(filtered_indirect))
+            with col2:
+                if 'effect_strength' in filtered_indirect.columns:
+                    avg_strength = filtered_indirect['effect_strength'].mean()
+                    if not pd.isna(avg_strength):
+                        st.metric("Avg Effect", f"{float(avg_strength):.2f}")
                     else:
-                        st.metric("Molecular Weight", "N/A")
+                        st.metric("Avg Effect", "N/A")
+                else:
+                    st.metric("Avg Effect", "N/A")
+            with col3:
+                if 'protein' in filtered_indirect.columns:
+                    unique_targets = int(filtered_indirect['protein'].nunique())
+                else:
+                    unique_targets = 0
+                st.metric("Unique Targets", unique_targets)
+            with col4:
+                if 'pathway' in filtered_indirect.columns:
+                    unique_pathways = int(filtered_indirect['pathway'].nunique())
+                    st.metric("Pathways", unique_pathways)
+                else:
+                    st.metric("Pathways", "N/A")
+            
+            # Table controls for indirect effects
+            col1, col2 = st.columns(2)
+            with col1:
+                sort_column_indirect = st.selectbox(
+                    "Sort by Column",
+                    filtered_indirect.columns.tolist(),
+                    key="indirect_sort_col"
+                )
+            with col2:
+                sort_order_indirect = st.selectbox(
+                    "Sort Order",
+                    ["Descending", "Ascending"],
+                    key="indirect_sort_order"
+                )
+            
+            # Apply sorting
+            ascending_indirect = sort_order_indirect == "Ascending"
+            sorted_indirect = filtered_indirect.sort_values(by=sort_column_indirect, ascending=ascending_indirect)
+            
+            # Display table
+            st.dataframe(
+                sorted_indirect.head(show_rows),
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            if len(filtered_indirect) > show_rows:
+                st.info(f"Showing first {show_rows} rows of {len(filtered_indirect)} total entries. Adjust 'Rows to Display' to see more.")
+        else:
+            st.info("No indirect effects found for the current filters.")
+        
+        # Combined data view
+        with st.expander("🔍 Advanced Data Views"):
+            st.subheader("Combined Interaction Overview")
+            
+            if len(filtered_direct) > 0 or len(filtered_indirect) > 0:
+                # Create summary dataframe
+                summary_data = []
                 
-                with col3:
-                    if protein_info['isoelectric_point'] > 0:
-                        st.metric("Isoelectric Point", f"{protein_info['isoelectric_point']:.2f}")
-                    else:
-                        st.metric("Isoelectric Point", "N/A")
+                if len(filtered_direct) > 0:
+                    for _, row in filtered_direct.iterrows():
+                        summary_data.append({
+                            'Protein': row.get('protein', 'N/A'),
+                            'Interaction_Type': 'Direct',
+                            'Evidence': row.get('evidence_category', 'N/A'),
+                            'Strength': row.get('affinity', 'N/A'),
+                            'Species': row.get('species', 'N/A') if 'species' in row else 'N/A'
+                        })
                 
-                # UniProt metadata
-                if protein_info.get('uniprot_metadata'):
-                    metadata = protein_info['uniprot_metadata']
-                    st.subheader("UniProt Information")
-                    
-                    if metadata.get('accession'):
-                        st.info(f"**UniProt Accession:** {metadata['accession']}")
-                    
-                    if metadata.get('protein_names'):
-                        st.write(f"**Protein Names:** {', '.join(metadata['protein_names'][:3])}")
-                    
-                    if metadata.get('gene_names'):
-                        st.write(f"**Gene Names:** {', '.join(metadata['gene_names'])}")
-                    
-                    if metadata.get('organism'):
-                        st.write(f"**Organism:** {metadata['organism']}")
-                    
-                    if metadata.get('keywords'):
-                        st.write(f"**Keywords:** {', '.join(metadata['keywords'][:5])}")
+                if len(filtered_indirect) > 0:
+                    for _, row in filtered_indirect.iterrows():
+                        summary_data.append({
+                            'Protein': row.get('protein', 'N/A'),
+                            'Interaction_Type': 'Indirect',
+                            'Evidence': row.get('evidence_category', 'N/A'),
+                            'Strength': row.get('effect_strength', 'N/A') if 'effect_strength' in row else 'N/A',
+                            'Species': row.get('species', 'N/A') if 'species' in row else 'N/A'
+                        })
                 
-                # PDB structure information
-                if protein_info.get('pdb_structures'):
-                    st.subheader("PDB Structure Information")
-                    pdb_structures = protein_info['pdb_structures']
+                if summary_data:
+                    summary_df = pd.DataFrame(summary_data)
+                    st.dataframe(summary_df.head(100), use_container_width=True, hide_index=True)
                     
-                    st.write(f"**Available Structures:** {len(pdb_structures)}")
-                    
-                    if pdb_structures:
-                        # Show first few structures
-                        for i, pdb_info in enumerate(pdb_structures[:3]):
-                            with st.expander(f"PDB: {pdb_info.get('pdb_id', f'Structure {i+1}')}"):
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    st.write(f"**Method:** {pdb_info.get('experimental_method', 'N/A')}")
-                                    st.write(f"**Resolution:** {pdb_info.get('resolution', 'N/A')}")
-                                with col2:
-                                    st.write(f"**Release Date:** {pdb_info.get('release_date', 'N/A')}")
-                                    st.write(f"**Title:** {pdb_info.get('title', 'N/A')[:100]}...")
-                
-                # AlphaFold structure link
-                alphafold_url = get_alphafold_structure_url(lookup_protein)
-                if alphafold_url:
-                    st.success(f"[AlphaFold Structure Available]({alphafold_url})")
-                
-                # Sequence display
-                if protein_info.get('sequence'):
-                    with st.expander("Protein Sequence"):
-                        sequence = protein_info['sequence']
-                        # Format sequence in blocks of 60 characters
-                        formatted_seq = '\n'.join([sequence[i:i+60] for i in range(0, len(sequence), 60)])
-                        st.code(formatted_seq, language=None)
-                        
-                        # Download sequence
-                        fasta_content = f">sp|{lookup_protein.upper()}|\n{formatted_seq}"
-                        st.download_button(
-                            label="📥 Download FASTA",
-                            data=fasta_content,
-                            file_name=f"{lookup_protein.upper()}.fasta",
-                            mime="text/plain"
-                        )
-                
-                # Data source info
-                st.info(f"**Data Source:** {protein_info.get('data_source', 'Unknown')}")
-                
-            except Exception as e:
-                st.error(f"Error retrieving protein information: {str(e)}")
-    
-    elif lookup_protein:
-        st.info("Click 'Lookup Protein' to retrieve comprehensive information from UniProt and PDB databases.")
+                    # Download combined data
+                    combined_csv = summary_df.to_csv(index=False)
+                    st.download_button(
+                        "📥 Download Combined Summary",
+                        combined_csv,
+                        "combined_interaction_summary.csv",
+                        "text/csv"
+                    )
+            else:
+                st.info("No data available for combined view.")
+    else:
+        st.info("Please wait for data to load or check the sidebar filters to display interaction tables.")
 
 with tab6:
     st.subheader("📖 Documentation")
