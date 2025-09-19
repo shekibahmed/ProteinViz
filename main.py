@@ -560,120 +560,119 @@ with tab4:
         st.info("Click 'Lookup Protein' to retrieve comprehensive information from UniProt and PDB databases.")
 
 with tab5:
-    st.subheader("🔬 3D Protein Structure Visualization")
+    st.subheader("🧬 Comprehensive Protein Information")
     
-    # Single protein structure viewer
-    st.write("### Individual Protein Structure Viewer")
+    # Protein lookup section
+    st.write("Enter a protein identifier to retrieve comprehensive information from UniProt and PDB databases:")
     
     col1, col2 = st.columns([3, 1])
     
     with col1:
-        structure_protein = st.text_input(
-            "Protein ID for 3D Structure",
-            value=query_protein if query_protein else "1A2C",
-            help="Enter PDB ID (4 characters) or UniProt ID for AlphaFold structure"
+        lookup_protein = st.text_input(
+            "Protein Identifier",
+            value=query_protein if query_protein else "P53",
+            help="Enter UniProt ID, gene name, or other protein identifier"
         )
     
     with col2:
         st.write("")
         st.write("")
-        view_structure = st.button("🔬 View 3D Structure", type="primary")
+        lookup_button = st.button("🔍 Lookup Protein", type="primary")
     
-    if view_structure and structure_protein:
-        with st.spinner(f"Loading 3D structure for {structure_protein}..."):
+    if lookup_button and lookup_protein:
+        with st.spinner("Retrieving comprehensive protein information..."):
             try:
-                structure_data = get_structure_for_protein(structure_protein)
-                if structure_data:
-                    display_protein_structure_tab(structure_protein, structure_data)
-                else:
-                    st.warning(f"No 3D structure found for {structure_protein}. Please try:")
-                    st.write("- A valid 4-character PDB ID (e.g., 1A2C, 3HFM)")
-                    st.write("- A UniProt ID for AlphaFold structures (e.g., P53, EGFR)")
+                protein_info = get_protein_info(lookup_protein)
+                
+                # Display basic information
+                st.subheader(f"Basic Information for {lookup_protein.upper()}")
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Sequence Length", protein_info['sequence_length'])
+                
+                with col2:
+                    if protein_info['molecular_weight'] > 0:
+                        st.metric("Molecular Weight", f"{protein_info['molecular_weight']:.1f} Da")
+                    else:
+                        st.metric("Molecular Weight", "N/A")
+                
+                with col3:
+                    if protein_info['isoelectric_point'] > 0:
+                        st.metric("Isoelectric Point", f"{protein_info['isoelectric_point']:.2f}")
+                    else:
+                        st.metric("Isoelectric Point", "N/A")
+                
+                # UniProt metadata
+                if protein_info.get('uniprot_metadata'):
+                    metadata = protein_info['uniprot_metadata']
+                    st.subheader("UniProt Information")
+                    
+                    if metadata.get('accession'):
+                        st.info(f"**UniProt Accession:** {metadata['accession']}")
+                    
+                    if metadata.get('protein_names'):
+                        st.write(f"**Protein Names:** {', '.join(metadata['protein_names'][:3])}")
+                    
+                    if metadata.get('gene_names'):
+                        st.write(f"**Gene Names:** {', '.join(metadata['gene_names'])}")
+                    
+                    if metadata.get('organism'):
+                        st.write(f"**Organism:** {metadata['organism']}")
+                    
+                    if metadata.get('keywords'):
+                        st.write(f"**Keywords:** {', '.join(metadata['keywords'][:5])}")
+                
+                # PDB structure information
+                if protein_info.get('pdb_structures'):
+                    st.subheader("PDB Structure Information")
+                    pdb_structures = protein_info['pdb_structures']
+                    
+                    st.write(f"**Available Structures:** {len(pdb_structures)}")
+                    
+                    if pdb_structures:
+                        # Show first few structures
+                        for i, pdb_info in enumerate(pdb_structures[:3]):
+                            with st.expander(f"PDB: {pdb_info.get('pdb_id', f'Structure {i+1}')}"):
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    st.write(f"**Method:** {pdb_info.get('experimental_method', 'N/A')}")
+                                    st.write(f"**Resolution:** {pdb_info.get('resolution', 'N/A')}")
+                                with col2:
+                                    st.write(f"**Release Date:** {pdb_info.get('release_date', 'N/A')}")
+                                    st.write(f"**Title:** {pdb_info.get('title', 'N/A')[:100]}...")
+                
+                # AlphaFold structure link
+                alphafold_url = get_alphafold_structure_url(lookup_protein)
+                if alphafold_url:
+                    st.success(f"[AlphaFold Structure Available]({alphafold_url})")
+                
+                # Sequence display
+                if protein_info.get('sequence'):
+                    with st.expander("Protein Sequence"):
+                        sequence = protein_info['sequence']
+                        # Format sequence in blocks of 60 characters
+                        formatted_seq = '\n'.join([sequence[i:i+60] for i in range(0, len(sequence), 60)])
+                        st.code(formatted_seq, language=None)
+                        
+                        # Download sequence
+                        fasta_content = f">sp|{lookup_protein.upper()}|\n{formatted_seq}"
+                        st.download_button(
+                            label="📥 Download FASTA",
+                            data=fasta_content,
+                            file_name=f"{lookup_protein.upper()}.fasta",
+                            mime="text/plain"
+                        )
+                
+                # Data source info
+                st.info(f"**Data Source:** {protein_info.get('data_source', 'Unknown')}")
+                
             except Exception as e:
-                st.error(f"Error loading 3D structure: {str(e)}")
+                st.error(f"Error retrieving protein information: {str(e)}")
     
-    # Structure comparison for protein pairs
-    st.write("### Protein Structure Comparison")
-    st.write("Compare the 3D structures of two proteins side by side:")
-    
-    col1, col2, col3 = st.columns([2, 2, 1])
-    
-    with col1:
-        protein_3d_a = st.text_input(
-            "First Protein",
-            value=query_protein if query_protein else "1A2C",
-            help="PDB ID or UniProt ID for first protein"
-        )
-    
-    with col2:
-        protein_3d_b = st.text_input(
-            "Second Protein",
-            value="P53",
-            help="PDB ID or UniProt ID for second protein"
-        )
-    
-    with col3:
-        st.write("")
-        st.write("")
-        compare_structures = st.button("🔄 Compare Structures")
-    
-    if compare_structures and protein_3d_a and protein_3d_b:
-        with st.spinner("Loading structures for comparison..."):
-            try:
-                display_structure_comparison(protein_3d_a, protein_3d_b)
-            except Exception as e:
-                st.error(f"Error comparing structures: {str(e)}")
-    
-    # 3D Interaction Network
-    st.write("### 3D Protein Interaction Network")
-    st.write("Visualize protein interaction networks in 3D space:")
-    
-    if st.session_state.data_loaded and len(filtered_direct) > 0:
-        # Extract protein pairs from filtered data
-        protein_pairs = []
-        predictions = []
-        
-        # Sample some interactions for network visualization
-        sample_size = min(10, len(filtered_direct))
-        sample_interactions = filtered_direct.head(sample_size)
-        
-        for _, row in sample_interactions.iterrows():
-            protein_pairs.append(("EGCG", row['protein']))
-            # Create mock prediction data for visualization
-            predictions.append({
-                'confidence': min(row.get('affinity', 1.0) / 10.0, 1.0),
-                'model_used': 'Known Interaction'
-            })
-        
-        if st.button("🕸️ Generate 3D Network"):
-            with st.spinner("Creating 3D interaction network..."):
-                try:
-                    display_interaction_network(protein_pairs, predictions)
-                except Exception as e:
-                    st.error(f"Error creating 3D network: {str(e)}")
-    else:
-        st.info("Load protein interaction data to generate 3D network visualizations.")
-    
-    # Information about 3D visualization features
-    with st.expander("ℹ️ About 3D Structure Visualization"):
-        st.write("""
-        **Features:**
-        - **Individual Structure Viewer**: View protein structures from PDB or AlphaFold
-        - **Structure Comparison**: Compare two proteins side by side
-        - **3D Interaction Networks**: Visualize protein interaction networks in 3D space
-        - **Interactive Controls**: Zoom, rotate, and customize visualization styles
-        - **Interface Residue Highlighting**: Highlight predicted interaction sites
-        
-        **Data Sources:**
-        - **PDB Database**: Experimentally determined structures (4-character IDs)
-        - **AlphaFold Database**: AI-predicted structures (UniProt IDs)
-        - **Real-time Fetching**: Structures are downloaded and cached automatically
-        
-        **Visualization Styles:**
-        - Cartoon, stick, sphere, and surface representations
-        - Multiple color schemes (spectrum, secondary structure, hydrophobicity)
-        - Customizable highlighting for interface residues
-        """)
+    elif lookup_protein:
+        st.info("Click 'Lookup Protein' to retrieve comprehensive information from UniProt and PDB databases.")
 
 with tab6:
     st.subheader("📖 Documentation")
