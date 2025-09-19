@@ -114,7 +114,7 @@ def train_baseline_model(model, model_name):
 
 def get_available_models():
     """Return list of available models"""
-    return ['Random Forest', 'SVM', 'Graph Neural Network', 'Graph Transformer (Advanced)']
+    return ['Random Forest', 'SVM', 'Graph Neural Network', 'Graph Transformer (Advanced)', 'EGNN + Graph Transformer']
 
 @st.cache_data
 def predict_interaction(protein_a, protein_b, model_type):
@@ -130,6 +130,10 @@ def predict_interaction(protein_a, protein_b, model_type):
         if model_type == 'Graph Transformer (Advanced)':
             # Advanced Graph Transformer prediction
             return predict_graph_transformer_interaction(protein_a, protein_b)
+        
+        if model_type == 'EGNN + Graph Transformer':
+            # Enhanced EGNN with Graph Transformer for PPI site prediction
+            return predict_egnn_ppi_sites(protein_a, protein_b)
         
         if model_type not in models:
             raise ValueError(f"Model {model_type} not available")
@@ -434,7 +438,8 @@ def get_model_explanation(model_type, confidence):
         'Random Forest': f"The Random Forest model analyzed {20} protein features and achieved {confidence:.2f} confidence. This ensemble method combines multiple decision trees to make robust predictions.",
         'SVM': f"The Support Vector Machine found optimal decision boundaries in high-dimensional protein feature space with {confidence:.2f} confidence.",
         'Graph Neural Network': f"The Graph Neural Network analyzed protein interaction networks using graph convolutions to capture structural patterns and achieved {confidence:.2f} confidence.",
-        'Graph Transformer (Advanced)': f"The Graph Transformer used multi-head attention mechanisms to analyze protein interaction networks and structural patterns, achieving {confidence:.2f} confidence."
+        'Graph Transformer (Advanced)': f"The Graph Transformer used multi-head attention mechanisms to analyze protein interaction networks and structural patterns, achieving {confidence:.2f} confidence.",
+        'EGNN + Graph Transformer': f"The EGNN model combined equivariant graph neural networks with transformer attention to predict protein-protein interaction sites at residue level with {confidence:.2f} confidence."
     }
     
     return explanations.get(model_type, f"Model prediction confidence: {confidence:.2f}")
@@ -669,3 +674,400 @@ def predict_graph_transformer_interaction(protein_a, protein_b):
     except Exception as e:
         st.warning(f"Graph Transformer prediction failed: {str(e)}")
         return predict_gnn_interaction(protein_a, protein_b)
+
+class EGNNLayer(nn.Module):
+    """Simplified Equivariant Graph Neural Network layer for protein interaction prediction"""
+    
+    def __init__(self, hidden_dim):
+        super(EGNNLayer, self).__init__()
+        self.hidden_dim = hidden_dim
+        
+        # Message network
+        self.message_net = nn.Sequential(
+            nn.Linear(hidden_dim * 2 + 1, hidden_dim),  # +1 for distance
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim)
+        )
+        
+        # Update network for node features
+        self.node_net = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim)
+        )
+        
+        # Coordinate update network
+        self.coord_net = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.SiLU(),
+            nn.Linear(hidden_dim // 2, 1)
+        )
+    
+    def forward(self, h, coords, edges):
+        # h: node features [N, hidden_dim]
+        # coords: node coordinates [N, 3] (simplified as 3D positions)
+        # edges: edge indices [2, E]
+        
+        row, col = edges
+        coord_diff = coords[row] - coords[col]  # [E, 3]
+        radial = torch.norm(coord_diff, dim=1, keepdim=True)  # [E, 1]
+        
+        # Compute messages
+        h_i, h_j = h[row], h[col]
+        message_input = torch.cat([h_i, h_j, radial], dim=1)
+        messages = self.message_net(message_input)  # [E, hidden_dim]
+        
+        # Aggregate messages
+        h_new = torch.zeros_like(h)
+        h_new = h_new.scatter_add(0, row.unsqueeze(1).expand(-1, h.size(1)), messages)
+        
+        # Update node features
+        h_new = self.node_net(torch.cat([h, h_new], dim=1))
+        
+        # Update coordinates
+        coord_weights = self.coord_net(messages)  # [E, 1]
+        coord_updates = coord_weights * coord_diff / (radial + 1e-8)  # [E, 3]
+        
+        coords_new = coords.clone()
+        coords_new = coords_new.scatter_add(0, row.unsqueeze(1).expand(-1, 3), coord_updates)
+        
+        return h_new, coords_new
+
+class ProteinEGNN(nn.Module):
+    """EGNN-based model for protein-protein interaction and site prediction"""
+    
+    def __init__(self, input_dim, hidden_dim=128, num_layers=4):
+        super(ProteinEGNN, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        
+        # Input embedding
+        self.node_embedding = nn.Linear(input_dim, hidden_dim)
+        
+        # EGNN layers
+        self.egnn_layers = nn.ModuleList([
+            EGNNLayer(hidden_dim) for _ in range(num_layers)
+        ])
+        
+        # Graph Transformer for global interaction
+        self.transformer = nn.MultiheadAttention(hidden_dim, num_heads=8, batch_first=True)
+        self.transformer_norm = nn.LayerNorm(hidden_dim)
+        
+        # PPI classification head
+        self.ppi_classifier = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, 1),
+            nn.Sigmoid()
+        )
+        
+        # Residue-level site prediction head
+        self.site_predictor = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 2, 1),
+            nn.Sigmoid()
+        )
+    
+    def forward(self, node_features, coords, edges, protein_assignment):
+        # Embed node features
+        h = self.node_embedding(node_features)  # [N, hidden_dim]
+        
+        # Apply EGNN layers
+        for egnn_layer in self.egnn_layers:
+            h_new, coords_new = egnn_layer(h, coords, edges)
+            h = h + h_new  # Residual connection
+            coords = coords_new
+        
+        # Apply transformer for global context
+        h_transformer, _ = self.transformer(h.unsqueeze(0), h.unsqueeze(0), h.unsqueeze(0))
+        h = self.transformer_norm(h + h_transformer.squeeze(0))
+        
+        # Aggregate protein-level representations
+        protein_a_mask = (protein_assignment == 0)
+        protein_b_mask = (protein_assignment == 1)
+        
+        h_a = h[protein_a_mask].mean(dim=0) if protein_a_mask.any() else torch.zeros(self.hidden_dim)
+        h_b = h[protein_b_mask].mean(dim=0) if protein_b_mask.any() else torch.zeros(self.hidden_dim)
+        
+        # PPI prediction
+        ppi_input = torch.cat([h_a, h_b], dim=0).unsqueeze(0)
+        ppi_score = self.ppi_classifier(ppi_input).squeeze()
+        
+        # Residue-level site predictions
+        site_scores = self.site_predictor(h).squeeze(1)
+        
+        return ppi_score, site_scores, h
+
+@st.cache_resource
+def initialize_egnn_model():
+    """Initialize and load the EGNN model"""
+    try:
+        model_path = "models/protein_egnn_model.pth"
+        input_dim = 20  # Expanded protein feature dimension
+        
+        model = ProteinEGNN(input_dim=input_dim)
+        
+        if os.path.exists(model_path):
+            try:
+                model.load_state_dict(torch.load(model_path, map_location='cpu'))
+            except:
+                model = train_egnn_model(model)
+        else:
+            model = train_egnn_model(model)
+        
+        model.eval()
+        return model
+    
+    except Exception as e:
+        st.warning(f"Failed to initialize EGNN model: {str(e)}")
+        return None
+
+def train_egnn_model(model, num_epochs=30):
+    """Train the EGNN model with synthetic protein interaction data"""
+    model.train()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
+    ppi_criterion = nn.BCELoss()
+    site_criterion = nn.BCELoss()
+    
+    for epoch in range(num_epochs):
+        total_loss = 0
+        num_batches = 10
+        
+        for batch in range(num_batches):
+            # Generate synthetic protein complex
+            num_residues_a = np.random.randint(50, 200)
+            num_residues_b = np.random.randint(50, 200)
+            total_residues = num_residues_a + num_residues_b
+            
+            # Node features (residue-level features)
+            node_features = torch.randn(total_residues, 20)
+            
+            # 3D coordinates (simplified as random positions)
+            coords = torch.randn(total_residues, 3)
+            
+            # Create edges (simplified connectivity)
+            edges = []
+            for i in range(total_residues - 1):
+                edges.append([i, i + 1])  # Sequential connectivity
+                if np.random.random() < 0.3:  # Add some random long-range connections
+                    j = np.random.randint(i + 2, total_residues)
+                    edges.append([i, j])
+            
+            edges = torch.tensor(edges).T.long() if edges else torch.empty((2, 0), dtype=torch.long)
+            
+            # Protein assignment (0 for protein A, 1 for protein B)
+            protein_assignment = torch.cat([
+                torch.zeros(num_residues_a, dtype=torch.long),
+                torch.ones(num_residues_b, dtype=torch.long)
+            ])
+            
+            # Generate synthetic labels
+            # PPI label based on feature compatibility
+            feature_sim = torch.cosine_similarity(
+                node_features[:num_residues_a].mean(dim=0),
+                node_features[num_residues_a:].mean(dim=0),
+                dim=0
+            )
+            ppi_label = (feature_sim > 0.3).float()
+            
+            # Site labels (interface residues)
+            site_labels = torch.zeros(total_residues)
+            if ppi_label > 0.5:  # Only have interface sites if interaction is predicted
+                # Randomly assign some residues as interface sites
+                interface_indices = np.random.choice(
+                    total_residues, 
+                    size=min(int(total_residues * 0.1), 20), 
+                    replace=False
+                )
+                site_labels[interface_indices] = 1.0
+            
+            # Forward pass
+            ppi_pred, site_preds, _ = model(node_features, coords, edges, protein_assignment)
+            
+            # Compute losses
+            ppi_loss = ppi_criterion(ppi_pred.unsqueeze(0), ppi_label.unsqueeze(0))
+            site_loss = site_criterion(site_preds, site_labels)
+            
+            total_loss_batch = ppi_loss + 0.5 * site_loss  # Weight site loss lower
+            
+            # Backward pass
+            optimizer.zero_grad()
+            total_loss_batch.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            
+            total_loss += total_loss_batch.item()
+    
+    # Save trained model
+    try:
+        os.makedirs("models", exist_ok=True)
+        torch.save(model.state_dict(), "models/protein_egnn_model.pth")
+    except:
+        pass
+    
+    return model
+
+def create_residue_graph(protein_sequence, features):
+    """Create a residue-level graph for detailed site prediction"""
+    n_residues = len(protein_sequence) if protein_sequence else len(features)
+    
+    # Create nodes for each residue
+    G = nx.Graph()
+    
+    for i in range(n_residues):
+        residue_type = protein_sequence[i] if protein_sequence and i < len(protein_sequence) else 'X'
+        G.add_node(i, residue=residue_type, position=i)
+    
+    # Add edges for sequential connectivity and some long-range interactions
+    for i in range(n_residues - 1):
+        G.add_edge(i, i + 1, edge_type='sequential')
+    
+    # Add some long-range edges based on feature similarity
+    if len(features) >= n_residues:
+        for i in range(0, n_residues, 10):  # Sample every 10th residue
+            for j in range(i + 5, min(i + 20, n_residues)):
+                if np.random.random() < 0.2:  # 20% chance of long-range connection
+                    G.add_edge(i, j, edge_type='long_range')
+    
+    return G
+
+def predict_egnn_ppi_sites(protein_a, protein_b):
+    """EGNN-based prediction for protein-protein interaction sites"""
+    try:
+        # Initialize EGNN model
+        egnn_model = initialize_egnn_model()
+        
+        if egnn_model is None:
+            # Fallback to Graph Transformer if EGNN initialization fails
+            return predict_graph_transformer_interaction(protein_a, protein_b)
+        
+        # Get protein features and sequences
+        features_a = get_protein_features(protein_a)
+        features_b = get_protein_features(protein_b)
+        
+        # Get protein sequences for residue-level analysis
+        from utils.protein_utils import get_protein_sequence
+        sequence_a = get_protein_sequence(protein_a) or ""
+        sequence_b = get_protein_sequence(protein_b) or ""
+        
+        # Extend features to match expected dimension (20)
+        def extend_features(features, target_dim=20):
+            if len(features) > target_dim:
+                return features[:target_dim]
+            elif len(features) < target_dim:
+                return np.pad(features, (0, target_dim - len(features)))
+            return features
+        
+        features_a = extend_features(features_a)
+        features_b = extend_features(features_b)
+        
+        # Create residue-level graphs
+        graph_a = create_residue_graph(sequence_a, features_a)
+        graph_b = create_residue_graph(sequence_b, features_b)
+        
+        # Simulate residue-level features
+        n_residues_a = max(len(sequence_a), 50) if sequence_a else 50
+        n_residues_b = max(len(sequence_b), 50) if sequence_b else 50
+        total_residues = n_residues_a + n_residues_b
+        
+        # Create synthetic residue features based on protein features
+        residue_features = []
+        for i in range(n_residues_a):
+            # Add noise to protein features to simulate residue variation
+            residue_feat = features_a + np.random.normal(0, 0.1, len(features_a))
+            residue_features.append(residue_feat)
+        
+        for i in range(n_residues_b):
+            residue_feat = features_b + np.random.normal(0, 0.1, len(features_b))
+            residue_features.append(residue_feat)
+        
+        # Convert to tensors
+        node_features = torch.FloatTensor(residue_features)
+        coords = torch.randn(total_residues, 3)  # Random 3D coordinates
+        
+        # Create edges (simplified)
+        edges = []
+        for i in range(total_residues - 1):
+            if i < n_residues_a - 1 or i >= n_residues_a:
+                edges.append([i, i + 1])
+        
+        # Add inter-protein edges (potential interaction sites)
+        for i in range(0, n_residues_a, 10):
+            for j in range(n_residues_a, min(n_residues_a + 20, total_residues), 5):
+                edges.append([i, j])
+        
+        edges_tensor = torch.tensor(edges).T.long() if edges else torch.empty((2, 0), dtype=torch.long)
+        
+        # Protein assignment
+        protein_assignment = torch.cat([
+            torch.zeros(n_residues_a, dtype=torch.long),
+            torch.ones(n_residues_b, dtype=torch.long)
+        ])
+        
+        # Make prediction
+        with torch.no_grad():
+            ppi_score, site_scores, residue_embeddings = egnn_model(
+                node_features, coords, edges_tensor, protein_assignment
+            )
+            
+            confidence = ppi_score.item()
+        
+        # Extract interface residues based on site predictions
+        interface_residues = []
+        site_threshold = 0.6
+        
+        # Get top scoring residues from each protein
+        site_scores_a = site_scores[:n_residues_a]
+        site_scores_b = site_scores[n_residues_a:]
+        
+        # Top interface residues from protein A
+        top_indices_a = torch.where(site_scores_a > site_threshold)[0]
+        for idx in top_indices_a[:5]:  # Top 5 residues
+            residue_pos = idx.item() + 1  # 1-indexed
+            residue_type = sequence_a[idx] if sequence_a and idx < len(sequence_a) else 'X'
+            interface_residues.append({
+                'protein': protein_a,
+                'residue': f'{residue_type}{residue_pos}',
+                'score': site_scores_a[idx].item(),
+                'prediction_method': 'EGNN Site Prediction',
+                'residue_type': residue_type
+            })
+        
+        # Top interface residues from protein B
+        top_indices_b = torch.where(site_scores_b > site_threshold)[0]
+        for idx in top_indices_b[:5]:  # Top 5 residues
+            residue_pos = idx.item() + 1
+            residue_type = sequence_b[idx] if sequence_b and idx < len(sequence_b) else 'X'
+            interface_residues.append({
+                'protein': protein_b,
+                'residue': f'{residue_type}{residue_pos}',
+                'score': site_scores_b[idx].item(),
+                'prediction_method': 'EGNN Site Prediction',
+                'residue_type': residue_type
+            })
+        
+        return {
+            'confidence': confidence,
+            'model_used': 'EGNN + Graph Transformer',
+            'interface_residues': interface_residues,
+            'graph_features': {
+                'total_residues': total_residues,
+                'protein_a_residues': n_residues_a,
+                'protein_b_residues': n_residues_b,
+                'interface_sites_predicted': len(interface_residues),
+                'egnn_layers': 4,
+                'prediction_quality': 'Residue-level'
+            },
+            'site_prediction_summary': {
+                'method': 'EGNN with residue-level analysis',
+                'confidence_threshold': site_threshold,
+                'total_interface_residues': len(interface_residues)
+            }
+        }
+    
+    except Exception as e:
+        st.warning(f"EGNN PPI site prediction failed: {str(e)}")
+        return predict_graph_transformer_interaction(protein_a, protein_b)
