@@ -158,7 +158,7 @@ if st.session_state.data_loaded and len(filtered_direct) > 0:
     st.dataframe(top_partners, use_container_width=True)
 
 # Tabs for different views
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Visualizations", "🔬 3D Structures", "📋 Data Tables", "🔬 ML Predictions", "🧬 Protein Info", "📖 Documentation"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Visualizations", "🔬 3D Structures", "🔬 ML Predictions", "🧬 Protein Info", "📋 Data Tables", "📖 Documentation"])
 
 with tab1:
     if st.session_state.data_loaded:
