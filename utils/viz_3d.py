@@ -18,7 +18,7 @@ import pandas as pd
 from io import StringIO
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def fetch_pdb_structure(pdb_id: str) -> Optional[str]:
     """Fetch PDB structure file from RCSB PDB"""
     try:
@@ -39,7 +39,7 @@ def fetch_pdb_structure(pdb_id: str) -> Optional[str]:
         st.warning(f"Error fetching PDB {pdb_id}: {str(e)}")
         return None
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def fetch_alphafold_structure(uniprot_id: str) -> Optional[str]:
     """Fetch AlphaFold structure from AlphaFold DB"""
     try:

@@ -10,8 +10,8 @@ from Bio import SeqIO
 from io import StringIO
 import json
 
-# Cache protein sequences to avoid repeated API calls
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+# Cache protein sequences to avoid repeated API calls - OPTIMIZED: Extended to 24 hours
+@st.cache_data(ttl=86400)  # Cache for 24 hours
 def get_protein_sequence(protein_id: str) -> Optional[str]:
     """
     Retrieve protein sequence from UniProt with enhanced error handling
@@ -217,7 +217,7 @@ def calculate_sequence_similarity(seq1: str, seq2: str) -> float:
     
     return similarity
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_uniprot_metadata(protein_id: str) -> Dict:
     """
     Retrieve comprehensive protein metadata from UniProt API
@@ -373,7 +373,7 @@ def parse_uniprot_entry(entry: Dict) -> Dict:
     
     return metadata
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_pdb_structure_info(protein_id: str) -> Dict:
     """
     Get PDB structure information for a protein

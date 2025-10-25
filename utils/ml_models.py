@@ -17,11 +17,11 @@ from scipy.spatial.distance import pdist, squareform
 from typing import Dict, List, Tuple, Optional
 from utils.protein_utils import get_protein_features
 
-# Cache models to avoid retraining
+# Cache models to avoid retraining - LAZY LOADING OPTIMIZATION
 @st.cache_resource
-def initialize_models():
-    """Initialize and train ML models"""
-    models = {
+def initialize_single_model(model_name):
+    """Initialize a single ML model on demand (lazy loading)"""
+    model_configs = {
         'Random Forest': RandomForestClassifier(
             n_estimators=100,
             random_state=42,
@@ -37,41 +37,50 @@ def initialize_models():
         )
     }
     
+    if model_name not in model_configs:
+        return None, None
+    
     # Try to load pre-trained models
     model_dir = "models"
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     
-    trained_models = {}
+    model_path = os.path.join(model_dir, f"{model_name.lower().replace(' ', '_')}_model.pkl")
+    scaler_path = os.path.join(model_dir, f"{model_name.lower().replace(' ', '_')}_scaler.pkl")
+    
+    if os.path.exists(model_path) and os.path.exists(scaler_path):
+        try:
+            trained_model = joblib.load(model_path)
+            scaler = joblib.load(scaler_path)
+            return trained_model, scaler
+        except:
+            pass
+    
+    # Train new model only if needed
+    model = model_configs[model_name]
+    trained_model, scaler = train_baseline_model(model, model_name)
+    
+    # Save the model for future use
+    try:
+        joblib.dump(trained_model, model_path)
+        joblib.dump(scaler, scaler_path)
+    except:
+        pass
+    
+    return trained_model, scaler
+
+# Legacy function for backward compatibility
+@st.cache_resource
+def initialize_models():
+    """Initialize and train ML models - DEPRECATED: Use initialize_single_model instead"""
+    models = {}
     scalers = {}
-    
-    for model_name, model in models.items():
-        model_path = os.path.join(model_dir, f"{model_name.lower().replace(' ', '_')}_model.pkl")
-        scaler_path = os.path.join(model_dir, f"{model_name.lower().replace(' ', '_')}_scaler.pkl")
-        
-        if os.path.exists(model_path) and os.path.exists(scaler_path):
-            try:
-                trained_models[model_name] = joblib.load(model_path)
-                scalers[model_name] = joblib.load(scaler_path)
-            except:
-                # If loading fails, train new model
-                trained_model, scaler = train_baseline_model(model, model_name)
-                trained_models[model_name] = trained_model
-                scalers[model_name] = scaler
-        else:
-            # Train new model
-            trained_model, scaler = train_baseline_model(model, model_name)
-            trained_models[model_name] = trained_model
+    for model_name in ['Random Forest', 'SVM']:
+        model, scaler = initialize_single_model(model_name)
+        if model is not None:
+            models[model_name] = model
             scalers[model_name] = scaler
-            
-            # Save the model
-            try:
-                joblib.dump(trained_model, model_path)
-                joblib.dump(scaler, scaler_path)
-            except:
-                pass  # Continue without saving if there are permission issues
-    
-    return trained_models, scalers
+    return models, scalers
 
 def train_baseline_model(model, model_name):
     """Train a baseline model with synthetic data"""
@@ -118,31 +127,40 @@ def get_available_models():
     """Return list of available models"""
     return ['Random Forest', 'SVM', 'Graph Neural Network', 'Graph Transformer (Advanced)', 'EGNN + Graph Transformer']
 
-@st.cache_data
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def predict_interaction(protein_a, protein_b, model_type):
-    """Predict interaction between two proteins"""
+    """Predict interaction between two proteins with tiered strategy"""
     try:
-        # Get trained models
-        models, scalers = initialize_models()
+        # TIERED PREDICTION STRATEGY: Use lightweight models for screening
+        if model_type in ['Graph Neural Network', 'Graph Transformer (Advanced)', 'EGNN + Graph Transformer']:
+            # First, run quick screening with Random Forest
+            screening_result = _quick_screening(protein_a, protein_b)
+            
+            # If screening confidence is very low, return early (saves compute)
+            if screening_result['confidence'] < 0.3:
+                screening_result['model_used'] = f"{model_type} (screened out by lightweight model)"
+                screening_result['optimization_note'] = 'Compute saved via tiered prediction'
+                return screening_result
         
+        # Route to appropriate model
         if model_type == 'Graph Neural Network':
-            # Real GNN prediction
             return predict_gnn_interaction(protein_a, protein_b)
         
         if model_type == 'Graph Transformer (Advanced)':
-            # Advanced Graph Transformer prediction
             return predict_graph_transformer_interaction(protein_a, protein_b)
         
         if model_type == 'EGNN + Graph Transformer':
-            # Enhanced EGNN with Graph Transformer for PPI site prediction
             return predict_egnn_ppi_sites(protein_a, protein_b)
         
-        if model_type not in models:
+        # LAZY LOADING: Load only the requested model
+        model, scaler = initialize_single_model(model_type)
+        
+        if model is None or scaler is None:
             raise ValueError(f"Model {model_type} not available")
         
-        # Get protein features
-        features_a = get_protein_features(protein_a)
-        features_b = get_protein_features(protein_b)
+        # Get protein features (now cached separately)
+        features_a = get_cached_protein_features(protein_a)
+        features_b = get_cached_protein_features(protein_b)
         
         # Combine features (concatenate and compute similarity features)
         combined_features = np.concatenate([features_a, features_b])
@@ -153,18 +171,14 @@ def predict_interaction(protein_a, protein_b, model_type):
         
         # Ensure we have the right number of features
         if len(final_features) < 20:
-            # Pad with zeros if we have fewer features
             final_features = np.pad(final_features, (0, 20 - len(final_features)))
         elif len(final_features) > 20:
-            # Truncate if we have more features
             final_features = final_features[:20]
         
         # Scale features
-        scaler = scalers[model_type]
         features_scaled = scaler.transform(final_features.reshape(1, -1))
         
         # Make prediction
-        model = models[model_type]
         confidence = model.predict_proba(features_scaled)[0][1]  # Probability of interaction
         
         # Mock interface residues for advanced models
@@ -257,14 +271,14 @@ def initialize_gnn_model():
         st.warning(f"Failed to initialize GNN model: {str(e)}")
         return None
 
-def train_gnn_model(model, num_epochs=100):
-    """Train the GNN model with synthetic protein interaction data"""
+def train_gnn_model(model, num_epochs=20):
+    """Train the GNN model with synthetic protein interaction data - OPTIMIZED: Reduced epochs"""
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.BCELoss()
     
-    # Generate synthetic training data
-    n_samples = 1000
+    # Generate synthetic training data (reduced from 1000 to save compute)
+    n_samples = 500
     input_dim = 10
     
     for epoch in range(num_epochs):
@@ -291,8 +305,9 @@ def train_gnn_model(model, num_epochs=100):
         os.makedirs("models", exist_ok=True)
         torch.save(model.state_dict(), "models/protein_gnn_model.pth")
     except:
-        pass  # Continue without saving if there are permission issues
+        pass
     
+    model.eval()
     return model
 
 def create_protein_interaction_graph(protein_a, protein_b, features_a, features_b):
@@ -420,6 +435,41 @@ def predict_mock_gnn_interaction(protein_a, protein_b):
         }
     }
 
+@st.cache_data(ttl=86400)  # Cache feature computations
+def get_cached_protein_features(protein_id):
+    """Get protein features with extended caching"""
+    return get_protein_features(protein_id)
+
+def _quick_screening(protein_a, protein_b):
+    """Quick screening using lightweight Random Forest model"""
+    try:
+        model, scaler = initialize_single_model('Random Forest')
+        if model is None or scaler is None:
+            return {'confidence': 0.5, 'interface_residues': []}
+        
+        features_a = get_cached_protein_features(protein_a)
+        features_b = get_cached_protein_features(protein_b)
+        
+        combined_features = np.concatenate([features_a, features_b])
+        similarity_features = compute_similarity_features(features_a, features_b)
+        final_features = np.concatenate([combined_features, similarity_features])
+        
+        if len(final_features) < 20:
+            final_features = np.pad(final_features, (0, 20 - len(final_features)))
+        elif len(final_features) > 20:
+            final_features = final_features[:20]
+        
+        features_scaled = scaler.transform(final_features.reshape(1, -1))
+        confidence = model.predict_proba(features_scaled)[0][1]
+        
+        return {
+            'confidence': confidence,
+            'model_used': 'Random Forest (Screening)',
+            'interface_residues': []
+        }
+    except:
+        return {'confidence': 0.5, 'interface_residues': []}
+
 def compute_similarity_features(features_a, features_b):
     """Compute similarity features between two protein feature vectors"""
     # Ensure both feature vectors have the same length
@@ -545,15 +595,15 @@ def initialize_graph_transformer():
         st.warning(f"Failed to initialize Graph Transformer: {str(e)}")
         return None
 
-def train_graph_transformer(model, num_epochs=50):
-    """Train the Graph Transformer model"""
+def train_graph_transformer(model, num_epochs=15):
+    """Train the Graph Transformer model - OPTIMIZED: Reduced epochs"""
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     criterion = nn.BCELoss()
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5)
     
-    # Generate synthetic training data
-    n_samples = 2000
+    # Generate synthetic training data (reduced for efficiency)
+    n_samples = 1000
     input_dim = 10
     
     for epoch in range(num_epochs):
@@ -597,8 +647,9 @@ def train_graph_transformer(model, num_epochs=50):
         os.makedirs("models", exist_ok=True)
         torch.save(model.state_dict(), "models/protein_graph_transformer.pth")
     except:
-        pass  # Continue without saving if there are permission issues
+        pass
     
+    model.eval()
     return model
 
 def predict_graph_transformer_interaction(protein_a, protein_b):
@@ -827,8 +878,8 @@ def initialize_egnn_model():
         st.warning(f"Failed to initialize EGNN model: {str(e)}")
         return None
 
-def train_egnn_model(model, num_epochs=30):
-    """Train the EGNN model with synthetic protein interaction data"""
+def train_egnn_model(model, num_epochs=10):
+    """Train the EGNN model with synthetic protein interaction data - OPTIMIZED: Reduced epochs"""
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     ppi_criterion = nn.BCELoss()
@@ -836,12 +887,12 @@ def train_egnn_model(model, num_epochs=30):
     
     for epoch in range(num_epochs):
         total_loss = 0
-        num_batches = 10
+        num_batches = 5  # Reduced from 10 for efficiency
         
         for batch in range(num_batches):
-            # Generate synthetic protein complex
-            num_residues_a = np.random.randint(50, 200)
-            num_residues_b = np.random.randint(50, 200)
+            # Generate synthetic protein complex (smaller sizes for efficiency)
+            num_residues_a = np.random.randint(30, 100)
+            num_residues_b = np.random.randint(30, 100)
             total_residues = num_residues_a + num_residues_b
             
             # Node features (residue-level features)
@@ -910,9 +961,10 @@ def train_egnn_model(model, num_epochs=30):
     except:
         pass
     
+    model.eval()
     return model
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_residue_level_features(protein_sequence: str) -> np.ndarray:
     """Generate detailed residue-level features from protein sequence"""
     
@@ -986,7 +1038,7 @@ def get_residue_level_features(protein_sequence: str) -> np.ndarray:
     
     return np.array(residue_features)
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_protein_coordinates(protein_id: str) -> Optional[np.ndarray]:
     """Attempt to get 3D coordinates for protein residues from PDB/AlphaFold"""
     try:
@@ -1132,13 +1184,22 @@ def predict_egnn_ppi_sites(protein_a, protein_b):
         features_a = extend_features(features_a)
         features_b = extend_features(features_b)
         
-        # Create residue-level graphs with real coordinates
-        graph_a = create_residue_graph(sequence_a or 'X' * n_residues_a, coords_a)
-        graph_b = create_residue_graph(sequence_b or 'X' * n_residues_b, coords_b)
-        
         # Get real residue-level features and coordinates
         n_residues_a = len(sequence_a) if sequence_a else 50
         n_residues_b = len(sequence_b) if sequence_b else 50
+        
+        # Get real protein coordinates first
+        coords_a = get_protein_coordinates(protein_a)
+        coords_b = get_protein_coordinates(protein_b)
+        
+        if coords_a is None:
+            coords_a = generate_realistic_backbone(n_residues_a)
+        if coords_b is None:
+            coords_b = generate_realistic_backbone(n_residues_b)
+        
+        # Create residue-level graphs with real coordinates
+        graph_a = create_residue_graph(sequence_a or 'X' * n_residues_a, coords_a)
+        graph_b = create_residue_graph(sequence_b or 'X' * n_residues_b, coords_b)
         total_residues = n_residues_a + n_residues_b
         
         # Generate proper residue-level features
@@ -1173,15 +1234,6 @@ def predict_egnn_ppi_sites(protein_a, protein_b):
         
         # Combine residue features
         all_residue_features = np.vstack([residue_features_a, residue_features_b])
-        
-        # Get real protein coordinates
-        coords_a = get_protein_coordinates(protein_a)
-        coords_b = get_protein_coordinates(protein_b)
-        
-        if coords_a is None:
-            coords_a = generate_realistic_backbone(n_residues_a)
-        if coords_b is None:
-            coords_b = generate_realistic_backbone(n_residues_b)
         
         # Ensure coordinate dimensions match residue counts
         if len(coords_a) != n_residues_a:
