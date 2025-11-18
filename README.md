@@ -2,6 +2,16 @@
 
 A comprehensive Streamlit-based web application designed for researchers to query, visualize, and predict protein interactions with a focus on EGCG (Epigallocatechin gallate) compounds. This dashboard integrates machine learning capabilities with real-time data from multiple protein databases to provide insights into protein-protein interactions.
 
+## 📸 Screenshots
+
+### Homepage
+![Homepage](homepage.png)
+
+### 3D Protein Structures
+![3D Structures](3d_structures.png)
+
+### Machine Learning Predictions
+![ML Predictions](ml_predictions.png)
 
 ## 🚀 Features
 
