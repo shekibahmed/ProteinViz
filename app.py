@@ -1,3 +1,11 @@
+"""Main application file for the EGCG Protein Interaction Research Dashboard.
+
+This Streamlit application provides a comprehensive dashboard for researchers to
+query, visualize, and predict protein interactions with a focus on EGCG
+(Epigallocatechin gallate) compounds. It integrates machine learning
+capabilities with real-time data from multiple protein databases to provide
+insights into protein-protein interactions.
+"""
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -25,7 +33,18 @@ if 'data_loaded' not in st.session_state:
 # Load and cache data
 @st.cache_data
 def initialize_data():
-    """Load and cache the protein interaction datasets"""
+    """Load and cache the protein interaction datasets.
+
+    This function loads the direct and indirect protein interaction data from CSV
+    files. It uses Streamlit's caching mechanism to avoid reloading the data on
+    every interaction.
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: A tuple containing two pandas
+            DataFrames:
+            - The first DataFrame contains direct protein interactions.
+            - The second DataFrame contains indirect protein effects.
+    """
     direct_df, indirect_df = load_data()
     return direct_df, indirect_df
 

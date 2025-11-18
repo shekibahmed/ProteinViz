@@ -1,8 +1,11 @@
-"""
-3D Protein Structure Visualization Module
+"""3D Protein Structure Visualization Module.
 
-Provides comprehensive 3D visualization capabilities for protein structures
-using Stmol and Py3DMol for interactive Streamlit applications.
+This module provides a comprehensive set of functions for fetching,
+displaying, and styling 3D protein structures within a Streamlit
+application. It leverages `stmol` and `py3Dmol` for interactive
+visualizations and supports various representations, color schemes, and
+highlighting of specific residues. It is designed to handle structures from
+both the RCSB PDB and the AlphaFold Database.
 """
 
 import streamlit as st
@@ -20,7 +23,19 @@ from io import StringIO
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def fetch_pdb_structure(pdb_id: str) -> Optional[str]:
-    """Fetch PDB structure file from RCSB PDB"""
+    """Fetch a PDB structure file from the RCSB PDB database.
+
+    This function downloads the PDB file for a given PDB ID. It includes
+    error handling for network issues and invalid IDs. The results are
+    cached for 24 hours to improve performance.
+
+    Args:
+        pdb_id (str): The 4-character PDB identifier.
+
+    Returns:
+        str, optional: The content of the PDB file as a string, or None if
+            the file cannot be fetched.
+    """
     try:
         pdb_id = pdb_id.upper().strip()
         if len(pdb_id) != 4:
@@ -41,7 +56,18 @@ def fetch_pdb_structure(pdb_id: str) -> Optional[str]:
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def fetch_alphafold_structure(uniprot_id: str) -> Optional[str]:
-    """Fetch AlphaFold structure from AlphaFold DB"""
+    """Fetch a predicted protein structure from the AlphaFold Database.
+
+    This function downloads a PDB file of a protein structure predicted by
+    AlphaFold, based on a UniProt ID. The results are cached for 24 hours.
+
+    Args:
+        uniprot_id (str): The UniProt identifier for the protein.
+
+    Returns:
+        str, optional: The content of the PDB file as a string, or None if
+            not found.
+    """
     try:
         uniprot_id = uniprot_id.upper().strip()
         url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb"
@@ -58,13 +84,42 @@ def fetch_alphafold_structure(uniprot_id: str) -> Optional[str]:
         return None
 
 def create_3d_viewer(pdb_data: str, width: int = 800, height: int = 500) -> py3Dmol.view:
-    """Create a basic 3D molecular viewer with PDB data"""
+    """Create a basic 3D molecular viewer with PDB data.
+
+    This function initializes a `py3Dmol` viewer instance and loads the
+    protein structure data into it.
+
+    Args:
+        pdb_data (str): A string containing the protein structure in PDB
+            format.
+        width (int, optional): The width of the viewer in pixels. Defaults
+            to 800.
+        height (int, optional): The height of the viewer in pixels.
+            Defaults to 500.
+
+    Returns:
+        py3Dmol.view: An instance of the py3Dmol viewer.
+    """
     viewer = py3Dmol.view(width=width, height=height)
     viewer.addModel(pdb_data, 'pdb')
     return viewer
 
 def style_protein_cartoon(viewer: py3Dmol.view, color_scheme: str = 'spectrum') -> py3Dmol.view:
-    """Apply cartoon representation to protein structure"""
+    """Apply a cartoon representation to a protein structure.
+
+    This function styles the protein in the viewer with a cartoon
+    representation, which is useful for visualizing secondary structures.
+    It supports various color schemes.
+
+    Args:
+        viewer (py3Dmol.view): The py3Dmol viewer instance.
+        color_scheme (str, optional): The color scheme to apply. Options
+            include 'spectrum', 'secondary', 'hydrophobicity', 'chain', or a
+            specific color name. Defaults to 'spectrum'.
+
+    Returns:
+        py3Dmol.view: The viewer instance with the applied style.
+    """
     if color_scheme == 'spectrum':
         viewer.setStyle({'cartoon': {'color': 'spectrum'}})
     elif color_scheme == 'secondary':
@@ -79,12 +134,39 @@ def style_protein_cartoon(viewer: py3Dmol.view, color_scheme: str = 'spectrum') 
     return viewer
 
 def style_protein_surface(viewer: py3Dmol.view, opacity: float = 0.7) -> py3Dmol.view:
-    """Add surface representation to protein structure"""
+    """Add a surface representation to a protein structure.
+
+    This function adds a molecular surface to the protein in the viewer,
+    which can be rendered with a specified opacity.
+
+    Args:
+        viewer (py3Dmol.view): The py3Dmol viewer instance.
+        opacity (float, optional): The opacity of the surface. Defaults to 0.7.
+
+    Returns:
+        py3Dmol.view: The viewer instance with the added surface style.
+    """
     viewer.addStyle({'surface': {'opacity': opacity, 'color': 'white'}})
     return viewer
 
 def highlight_residues(viewer: py3Dmol.view, residues: Optional[List[Dict]] = None, style: str = 'sphere') -> py3Dmol.view:
-    """Highlight specific residues in the structure"""
+    """Highlight specific residues in the structure.
+
+    This function applies a distinct style to a list of specified residues,
+    making them stand out in the visualization. This is useful for marking
+    active sites or interaction interfaces.
+
+    Args:
+        viewer (py3Dmol.view): The py3Dmol viewer instance.
+        residues (list[dict], optional): A list of dictionaries, where each
+            dictionary contains information about a residue to highlight,
+            including its number and a score for coloring. Defaults to None.
+        style (str, optional): The style to use for highlighting ('sphere'
+            or 'stick'). Defaults to 'sphere'.
+
+    Returns:
+        py3Dmol.view: The viewer instance with the highlighted residues.
+    """
     if not residues:
         return viewer
     
@@ -121,7 +203,21 @@ def highlight_residues(viewer: py3Dmol.view, residues: Optional[List[Dict]] = No
     return viewer
 
 def create_network_visualization(proteins: List[str], interactions: List[Tuple[str, str, float]]) -> py3Dmol.view:
-    """Create a 3D network visualization of protein interactions"""
+    """Create a 3D network visualization of protein interactions.
+
+    This function generates a 3D representation of a protein interaction
+    network. Proteins are represented as spheres, and interactions are shown
+    as cylinders connecting them.
+
+    Args:
+        proteins (list[str]): A list of protein identifiers.
+        interactions (list[tuple[str, str, float]]): A list of tuples, each
+            representing an interaction with the two protein identifiers and
+            a confidence score.
+
+    Returns:
+        py3Dmol.view: A py3Dmol viewer instance containing the 3D network.
+    """
     viewer = py3Dmol.view(width=800, height=600)
     
     # Position proteins in 3D space
@@ -183,7 +279,18 @@ def create_network_visualization(proteins: List[str], interactions: List[Tuple[s
     return viewer
 
 def display_protein_structure_tab(protein_id: str, pdb_data: str, interface_residues: Optional[List[Dict]] = None):
-    """Display comprehensive 3D protein structure visualization"""
+    """Display a comprehensive 3D protein structure visualization.
+
+    This function creates a Streamlit tab with a 3D viewer for a protein
+    structure. It includes controls for changing the color scheme and
+    representation, and for highlighting interface residues.
+
+    Args:
+        protein_id (str): The identifier of the protein being displayed.
+        pdb_data (str): The protein structure data in PDB format.
+        interface_residues (list[dict], optional): A list of interface
+            residues to highlight. Defaults to None.
+    """
     
     st.subheader(f"3D Structure Viewer - {protein_id}")
     
@@ -276,7 +383,17 @@ def display_protein_structure_tab(protein_id: str, pdb_data: str, interface_resi
         st.info("The structure viewer encountered an issue. Please try a different protein or check the PDB ID.")
 
 def display_interaction_network(protein_pairs: List[Tuple[str, str]], predictions: List[Dict]):
-    """Display 3D protein interaction network"""
+    """Display a 3D protein interaction network.
+
+    This function creates a Streamlit component for visualizing a protein
+    interaction network in 3D. It includes controls for filtering
+    interactions by a confidence threshold.
+
+    Args:
+        protein_pairs (list[tuple[str, str]]): A list of protein pairs.
+        predictions (list[dict]): A list of prediction dictionaries, each
+            containing a confidence score.
+    """
     
     st.subheader("🕸️ 3D Protein Interaction Network")
     
@@ -358,7 +475,18 @@ def display_interaction_network(protein_pairs: List[Tuple[str, str]], prediction
         st.info("The network visualization encountered an issue. Please try adjusting the parameters.")
 
 def get_structure_for_protein(protein_id: str) -> Optional[str]:
-    """Get protein structure data from PDB or AlphaFold"""
+    """Get protein structure data from PDB or AlphaFold.
+
+    This function attempts to find and fetch protein structure data, first by
+    treating the ID as a PDB ID, and then as a UniProt ID for AlphaFold.
+
+    Args:
+        protein_id (str): The identifier for the protein.
+
+    Returns:
+        str, optional: A string containing the PDB-formatted structure data,
+            or None if no structure is found.
+    """
     
     # First try as PDB ID (4 characters)
     if len(protein_id) == 4:
@@ -381,7 +509,20 @@ def get_structure_for_protein(protein_id: str) -> Optional[str]:
     return None
 
 def display_structure_comparison(protein_a: str, protein_b: str, interface_residues_a: Optional[List[Dict]] = None, interface_residues_b: Optional[List[Dict]] = None):
-    """Display side-by-side comparison of two protein structures"""
+    """Display a side-by-side comparison of two protein structures.
+
+    This function creates a two-column layout in Streamlit to display the
+    3D structures of two different proteins next to each other, allowing for
+    easy visual comparison.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+        interface_residues_a (list[dict], optional): Interface residues for
+            the first protein. Defaults to None.
+        interface_residues_b (list[dict], optional): Interface residues for
+            the second protein. Defaults to None.
+    """
     
     st.subheader("🔄 Protein Structure Comparison")
     

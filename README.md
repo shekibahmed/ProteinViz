@@ -31,7 +31,7 @@ A comprehensive Streamlit-based web application designed for researchers to quer
 
 ### 🧠 Machine Learning Predictions
 - Advanced ML models for predicting protein-protein interactions
-- Support for multiple algorithms: Random Forest, SVM, Graph Neural Networks (GNNs)
+- **Support for multiple algorithms**: Random Forest, SVM, Graph Neural Networks (GNNs), and advanced Graph Transformers.
 - Batch prediction capabilities for multiple protein pairs
 - Interface residue prediction for interaction sites
 - Confidence scoring and model explanations
@@ -108,7 +108,7 @@ The project uses the following key libraries:
 
 3. **Run the application**
    ```bash
-   streamlit run main.py --server.port 5000
+   streamlit run app.py --server.port 5000
    ```
 
 4. **Access the dashboard**
@@ -176,7 +176,7 @@ port = 5000
 
 ### Project Structure
 ```
-├── main.py                 # Main Streamlit application
+├── app.py                 # Main Streamlit application
 ├── utils/
 │   ├── data_loader.py     # Data loading and CSV handling
 │   ├── ml_models.py       # Machine learning implementations
