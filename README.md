@@ -206,7 +206,7 @@ port = 5000
 Contributions are welcome! Please feel free to submit pull requests, create issues, or suggest new features for protein interaction analysis.
 
 ## 📄 License
-This project is open source. Please check the license file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 - **UniProt**: For providing comprehensive protein data
