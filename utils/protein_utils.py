@@ -1,3 +1,10 @@
+"""Utility functions for handling protein data.
+
+This module provides a set of functions for fetching, processing, and
+analyzing protein data from various sources like UniProt and PDB. It includes
+functionalities for retrieving protein sequences, metadata, structural
+information, and for calculating various protein features.
+"""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -13,14 +20,20 @@ import json
 # Cache protein sequences to avoid repeated API calls - OPTIMIZED: Extended to 24 hours
 @st.cache_data(ttl=86400)  # Cache for 24 hours
 def get_protein_sequence(protein_id: str) -> Optional[str]:
-    """
-    Retrieve protein sequence from UniProt with enhanced error handling
-    
+    """Retrieve a protein sequence from UniProt with enhanced error handling.
+
+    This function fetches a protein's amino acid sequence from the UniProt
+    database. It includes robust error handling and multiple fallback
+    strategies, such as searching by gene name. If all attempts fail, it
+    generates a mock sequence.
+
     Args:
-        protein_id: Protein identifier (UniProt ID, gene name, etc.)
-        
+        protein_id (str): The protein identifier (e.g., UniProt ID, gene
+            name).
+
     Returns:
-        Protein sequence string or None if not found
+        str, optional: The protein sequence as a string, or None if it
+            cannot be retrieved.
     """
     try:
         # Clean the protein ID
@@ -82,9 +95,18 @@ def get_protein_sequence(protein_id: str) -> Optional[str]:
     return generate_mock_sequence(protein_id)
 
 def generate_mock_sequence(protein_id: str) -> str:
-    """
-    Generate a mock protein sequence for demonstration purposes
-    Uses protein ID to create reproducible sequences
+    """Generate a mock protein sequence for demonstration purposes.
+
+    This function creates a reproducible, synthetic protein sequence based on
+    the hash of the protein ID. This is used as a fallback when a real
+    sequence cannot be fetched from external databases.
+
+    Args:
+        protein_id (str): The identifier for the protein, used to seed the
+            random sequence generation.
+
+    Returns:
+        str: A mock protein sequence.
     """
     # Use protein ID hash to generate reproducible sequence
     np.random.seed(hash(protein_id) % 2**32)
@@ -103,14 +125,17 @@ def generate_mock_sequence(protein_id: str) -> str:
     return sequence
 
 def validate_protein_id(protein_id: str) -> bool:
-    """
-    Validate if protein ID format is reasonable
-    
+    """Validate if a protein ID format is reasonable.
+
+    This function checks if a given protein identifier conforms to common
+    formats, such as UniProt IDs or gene names. It is used to provide a basic
+    sanity check on user input.
+
     Args:
-        protein_id: Protein identifier to validate
-        
+        protein_id (str): The protein identifier to validate.
+
     Returns:
-        True if format seems valid, False otherwise
+        bool: True if the format seems valid, False otherwise.
     """
     if not protein_id or len(protein_id) < 2:
         return False
@@ -133,14 +158,19 @@ def validate_protein_id(protein_id: str) -> bool:
     return False
 
 def get_protein_features(protein_id: str) -> np.ndarray:
-    """
-    Extract numerical features from protein sequence for ML models
-    
+    """Extract numerical features from a protein sequence for ML models.
+
+    This function calculates a feature vector from a protein's sequence.
+    These features, which include amino acid frequencies, physicochemical
+    properties, and secondary structure propensity, are used as inputs for
+    machine learning models.
+
     Args:
-        protein_id: Protein identifier
-        
+        protein_id (str): The identifier of the protein.
+
     Returns:
-        Feature vector as numpy array
+        np.ndarray: A numpy array representing the feature vector of the
+            protein.
     """
     sequence = get_protein_sequence(protein_id)
     
@@ -189,15 +219,18 @@ def get_protein_features(protein_id: str) -> np.ndarray:
     return np.array(features)
 
 def calculate_sequence_similarity(seq1: str, seq2: str) -> float:
-    """
-    Calculate simple sequence similarity between two protein sequences
-    
+    """Calculate simple sequence similarity between two protein sequences.
+
+    This function computes a basic, identity-based similarity score between
+    two protein sequences. The score is normalized by the length of the
+    longer sequence to penalize length differences.
+
     Args:
-        seq1: First protein sequence
-        seq2: Second protein sequence
-        
+        seq1 (str): The first protein sequence.
+        seq2 (str): The second protein sequence.
+
     Returns:
-        Similarity score between 0 and 1
+        float: A similarity score between 0.0 and 1.0.
     """
     if not seq1 or not seq2:
         return 0.0
@@ -219,14 +252,18 @@ def calculate_sequence_similarity(seq1: str, seq2: str) -> float:
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_uniprot_metadata(protein_id: str) -> Dict:
-    """
-    Retrieve comprehensive protein metadata from UniProt API
-    
+    """Retrieve comprehensive protein metadata from the UniProt API.
+
+    This function fetches a wide range of metadata for a given protein from
+    UniProt, including gene names, protein names, organism, function, and
+    more. It uses multiple search strategies to find the correct entry.
+
     Args:
-        protein_id: Protein identifier
-        
+        protein_id (str): The identifier of the protein to look up.
+
     Returns:
-        Dictionary with protein metadata
+        dict: A dictionary containing the parsed UniProt metadata. Returns an
+            empty dictionary if the metadata cannot be retrieved.
     """
     try:
         protein_id = protein_id.strip().upper()
@@ -264,14 +301,16 @@ def get_uniprot_metadata(protein_id: str) -> Dict:
     return {}
 
 def parse_uniprot_entry(entry: Dict) -> Dict:
-    """
-    Parse UniProt JSON entry into structured metadata
-    
+    """Parse a UniProt JSON entry into a structured metadata dictionary.
+
+    This function takes a raw JSON entry from the UniProt API and extracts
+    key information into a more easily accessible format.
+
     Args:
-        entry: UniProt JSON entry
-        
+        entry (dict): The UniProt JSON entry for a single protein.
+
     Returns:
-        Parsed metadata dictionary
+        dict: A dictionary containing the parsed and structured metadata.
     """
     metadata = {
         'accession': entry.get('primaryAccession', ''),
@@ -375,14 +414,19 @@ def parse_uniprot_entry(entry: Dict) -> Dict:
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_pdb_structure_info(protein_id: str) -> Dict:
-    """
-    Get PDB structure information for a protein
-    
+    """Get PDB structure information for a protein.
+
+    This function queries for Protein Data Bank (PDB) structures associated
+    with a given protein identifier. It first attempts to find a mapping from
+    UniProt to PDB and then fetches detailed information for each associated
+    PDB entry.
+
     Args:
-        protein_id: Protein identifier
-        
+        protein_id (str): The identifier of the protein.
+
     Returns:
-        Dictionary with PDB structure information
+        dict: A dictionary containing information about the found PDB
+            structures.
     """
     try:
         # First try to get UniProt to PDB mapping
@@ -421,14 +465,18 @@ def get_pdb_structure_info(protein_id: str) -> Dict:
 
 @st.cache_data(ttl=3600)
 def get_pdb_entry_info(pdb_id: str) -> Optional[Dict]:
-    """
-    Get information about a specific PDB entry
-    
+    """Get information about a specific PDB entry.
+
+    This function retrieves detailed information for a single PDB entry,
+    including its title, resolution, experimental method, and release date,
+    by querying the RCSB PDB REST API.
+
     Args:
-        pdb_id: PDB identifier
-        
+        pdb_id (str): The PDB identifier (e.g., '1A2C').
+
     Returns:
-        Dictionary with PDB entry information
+        dict, optional: A dictionary with the PDB entry's information, or
+            None if the information cannot be retrieved.
     """
     try:
         url = f"https://data.rcsb.org/rest/v1/core/entry/{pdb_id.upper()}"
@@ -453,14 +501,18 @@ def get_pdb_entry_info(pdb_id: str) -> Optional[Dict]:
     return None
 
 def get_protein_info(protein_id: str) -> Dict:
-    """
-    Get comprehensive protein information including sequence, metadata, and structure
-    
+    """Get comprehensive protein information.
+
+    This function aggregates various pieces of protein information, including
+    sequence, features, metadata, and structural information, into a single
+    dictionary.
+
     Args:
-        protein_id: Protein identifier
-        
+        protein_id (str): The identifier of the protein.
+
     Returns:
-        Dictionary with comprehensive protein information
+        dict: A dictionary containing comprehensive information about the
+            protein.
     """
     sequence = get_protein_sequence(protein_id)
     features = get_protein_features(protein_id)
@@ -483,14 +535,17 @@ def get_protein_info(protein_id: str) -> Dict:
     return info
 
 def estimate_molecular_weight(sequence: str) -> float:
-    """
-    Estimate molecular weight of protein from sequence
-    
+    """Estimate the molecular weight of a protein from its sequence.
+
+    This function calculates an estimated molecular weight by summing the
+    average weights of its constituent amino acids and accounting for the
+    loss of water molecules during peptide bond formation.
+
     Args:
-        sequence: Protein sequence
-        
+        sequence (str): The protein's amino acid sequence.
+
     Returns:
-        Estimated molecular weight in Daltons
+        float: The estimated molecular weight in Daltons.
     """
     # Average molecular weights of amino acids (in Daltons)
     aa_weights = {
@@ -509,14 +564,17 @@ def estimate_molecular_weight(sequence: str) -> float:
     return weight
 
 def estimate_isoelectric_point(sequence: str) -> float:
-    """
-    Estimate isoelectric point (pI) of protein from sequence
-    
+    """Estimate the isoelectric point (pI) of a protein from its sequence.
+
+    This function estimates the pI, the pH at which a protein has no net
+    electrical charge, by performing a binary search over a range of pH
+    values and calculating the net charge at each point.
+
     Args:
-        sequence: Protein sequence
-        
+        sequence (str): The protein's amino acid sequence.
+
     Returns:
-        Estimated pI value
+        float: The estimated isoelectric point (pI).
     """
     # pKa values for ionizable groups
     pka_values = {
@@ -558,7 +616,20 @@ def estimate_isoelectric_point(sequence: str) -> float:
     return ph
 
 def calculate_charge_at_ph(counts: Dict, pka_values: Dict, ph: float) -> float:
-    """Calculate net charge at given pH"""
+    """Calculate the net charge of a protein at a given pH.
+
+    This helper function calculates the net electrical charge of a protein
+    based on the counts of its ionizable amino acid residues and their pKa
+    values at a specific pH.
+
+    Args:
+        counts (dict): A dictionary with counts of ionizable amino acids.
+        pka_values (dict): A dictionary of pKa values for the amino acids.
+        ph (float): The pH at which to calculate the charge.
+
+    Returns:
+        float: The net charge of the protein.
+    """
     charge = 0.0
     
     # Positive charges (protonated at low pH)
@@ -581,16 +652,19 @@ def calculate_charge_at_ph(counts: Dict, pka_values: Dict, ph: float) -> float:
 
 @st.cache_data(ttl=1800)
 def search_similar_proteins(query_protein: str, database_df: pd.DataFrame, top_n: int = 5) -> pd.DataFrame:
-    """
-    Find proteins similar to query protein based on available data
-    
+    """Find proteins similar to a query protein based on available data.
+
+    This function performs a simple text-based search to find proteins in a
+    DataFrame that are similar to a given query protein.
+
     Args:
-        query_protein: Query protein identifier
-        database_df: DataFrame with protein data
-        top_n: Number of top results to return
-        
+        query_protein (str): The identifier of the query protein.
+        database_df (pd.DataFrame): A DataFrame containing protein data.
+        top_n (int, optional): The number of top similar proteins to
+            return. Defaults to 5.
+
     Returns:
-        DataFrame with similar proteins
+        pd.DataFrame: A DataFrame with the most similar proteins.
     """
     if database_df.empty:
         return pd.DataFrame()
@@ -621,15 +695,18 @@ def search_similar_proteins(query_protein: str, database_df: pd.DataFrame, top_n
     return result_df.head(top_n)
 
 def get_protein_interactions_from_string(protein_id: str, species: str = "9606") -> Dict:
-    """
-    Get protein interactions from STRING database
-    
+    """Get protein interactions from the STRING database.
+
+    This function queries the STRING database to retrieve known and predicted
+    protein-protein interactions for a given protein.
+
     Args:
-        protein_id: Protein identifier
-        species: NCBI taxonomy ID (default: 9606 for human)
-        
+        protein_id (str): The identifier of the protein.
+        species (str, optional): The NCBI taxonomy ID for the species.
+            Defaults to "9606" (Human).
+
     Returns:
-        Dictionary with interaction data
+        dict: A dictionary containing the interaction data from STRING.
     """
     try:
         # STRING API endpoint for protein interactions
@@ -660,14 +737,17 @@ def get_protein_interactions_from_string(protein_id: str, species: str = "9606")
     return {'interactions': [], 'count': 0, 'source': 'STRING'}
 
 def get_alphafold_structure_url(protein_id: str) -> Optional[str]:
-    """
-    Get AlphaFold structure URL for a protein
-    
+    """Get the AlphaFold structure URL for a protein.
+
+    This function constructs and verifies the URL for a protein's predicted
+    structure in the AlphaFold database.
+
     Args:
-        protein_id: UniProt protein identifier
-        
+        protein_id (str): The UniProt identifier for the protein.
+
     Returns:
-        URL to AlphaFold structure or None
+        str, optional: The URL to the AlphaFold PDB file, or None if it
+            does not exist.
     """
     try:
         # Clean protein ID

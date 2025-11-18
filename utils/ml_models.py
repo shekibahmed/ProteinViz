@@ -1,3 +1,11 @@
+"""Machine learning models for protein interaction prediction.
+
+This module contains the implementation of various machine learning models
+for predicting protein-protein interactions. It includes baseline models like
+Random Forest and SVM, as well as more advanced models like Graph Neural
+Networks (GNNs) and Transformers. The module also provides functions for
+model initialization, training, and prediction.
+"""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -20,7 +28,22 @@ from utils.protein_utils import get_protein_features
 # Cache models to avoid retraining - LAZY LOADING OPTIMIZATION
 @st.cache_resource
 def initialize_single_model(model_name):
-    """Initialize a single ML model on demand (lazy loading)"""
+    """Initialize a single ML model on demand (lazy loading).
+
+    This function initializes a specific machine learning model by its name. It
+    supports 'Random Forest' and 'SVM'. The function uses lazy loading to
+    only initialize the model when it is first requested. It also handles
+    loading pre-trained models from disk and training new models if they are
+    not available.
+
+    Args:
+        model_name (str): The name of the model to initialize.
+
+    Returns:
+        tuple: A tuple containing the trained model and the scaler used for
+            feature scaling. Returns (None, None) if the model name is not
+            recognized.
+    """
     model_configs = {
         'Random Forest': RandomForestClassifier(
             n_estimators=100,
@@ -72,7 +95,17 @@ def initialize_single_model(model_name):
 # Legacy function for backward compatibility
 @st.cache_resource
 def initialize_models():
-    """Initialize and train ML models - DEPRECATED: Use initialize_single_model instead"""
+    """Initialize and train ML models (DEPRECATED).
+
+    This function is deprecated in favor of `initialize_single_model`. It
+    initializes all baseline machine learning models at once.
+
+    Returns:
+        tuple: A tuple containing two dictionaries:
+            - The first dictionary maps model names to the trained model
+              objects.
+            - The second dictionary maps model names to the scaler objects.
+    """
     models = {}
     scalers = {}
     for model_name in ['Random Forest', 'SVM']:
@@ -83,7 +116,21 @@ def initialize_models():
     return models, scalers
 
 def train_baseline_model(model, model_name):
-    """Train a baseline model with synthetic data"""
+    """Train a baseline model with synthetic data.
+
+    This function trains a given baseline model (e.g., Random Forest, SVM)
+    using synthetically generated data. This is intended for demonstration
+    purposes when actual training data is not available.
+
+    Args:
+        model: The machine learning model object to train.
+        model_name (str): The name of the model, used for potential future
+            logging or tracking.
+
+    Returns:
+        tuple: A tuple containing the trained model and the scaler used for
+            feature scaling.
+    """
     # Generate synthetic training data for demonstration
     # In a real application, this would use actual protein interaction data
     np.random.seed(42)
@@ -124,12 +171,34 @@ def train_baseline_model(model, model_name):
     return model, scaler
 
 def get_available_models():
-    """Return list of available models"""
+    """Return a list of available machine learning models.
+
+    Returns:
+        list[str]: A list of strings, where each string is the name of an
+            available model.
+    """
     return ['Random Forest', 'SVM', 'Graph Neural Network', 'Graph Transformer (Advanced)', 'EGNN + Graph Transformer']
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def predict_interaction(protein_a, protein_b, model_type):
-    """Predict interaction between two proteins with tiered strategy"""
+    """Predict the interaction between two proteins using a specified model.
+
+    This function uses a tiered prediction strategy. For advanced models, it
+    first runs a quick screening with a lightweight model. If the initial
+    confidence is very low, it returns early to save computational resources.
+    Otherwise, it proceeds with the selected model for a more detailed
+    prediction.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+        model_type (str): The type of model to use for the prediction.
+
+    Returns:
+        dict: A dictionary containing the prediction results, including the
+            confidence score, the model used, any predicted interface
+            residues, and other relevant information.
+    """
     try:
         # TIERED PREDICTION STRATEGY: Use lightweight models for screening
         if model_type in ['Graph Neural Network', 'Graph Transformer (Advanced)', 'EGNN + Graph Transformer']:
@@ -211,7 +280,20 @@ def predict_interaction(protein_a, protein_b, model_type):
         }
 
 class ProteinGCN(nn.Module):
-    """Graph Convolutional Network for protein interaction prediction"""
+    """Graph Convolutional Network for protein interaction prediction.
+
+    This class implements a simple Graph Convolutional Network (GCN) for
+    predicting protein-protein interactions. It uses a manual GCN
+    implementation as a fallback in case `torch-geometric` is not
+    available.
+
+    Attributes:
+        node_embedding (nn.Linear): Linear layer to embed input features.
+        conv1 (nn.Linear): First graph convolutional layer.
+        conv2 (nn.Linear): Second graph convolutional layer.
+        classifier (nn.Linear): Final classification layer.
+        dropout (nn.Dropout): Dropout layer for regularization.
+    """
     
     def __init__(self, input_dim, hidden_dim=64, output_dim=1):
         super(ProteinGCN, self).__init__()
@@ -223,6 +305,16 @@ class ProteinGCN(nn.Module):
         self.dropout = nn.Dropout(0.2)
         
     def forward(self, protein_a_features, protein_b_features, adjacency_matrix):
+        """Defines the forward pass of the ProteinGCN model.
+
+        Args:
+            protein_a_features (torch.Tensor): Feature tensor for protein A.
+            protein_b_features (torch.Tensor): Feature tensor for protein B.
+            adjacency_matrix (torch.Tensor): The adjacency matrix of the graph.
+
+        Returns:
+            torch.Tensor: The interaction prediction score.
+        """
         # Simple GCN forward pass without torch-geometric
         # Embed protein features
         h_a = torch.relu(self.node_embedding(protein_a_features))
@@ -247,7 +339,16 @@ class ProteinGCN(nn.Module):
 
 @st.cache_resource
 def initialize_gnn_model():
-    """Initialize and load the GNN model"""
+    """Initialize and load the GNN model.
+
+    This function initializes the ProteinGCN model. It attempts to load a
+    pre-trained model from a file. If the file does not exist or loading
+    fails, it trains a new model and saves it.
+
+    Returns:
+        ProteinGCN: The initialized GNN model. Returns None if
+            initialization fails.
+    """
     try:
         model_path = "models/protein_gnn_model.pth"
         input_dim = 10  # Protein feature dimension
@@ -272,7 +373,20 @@ def initialize_gnn_model():
         return None
 
 def train_gnn_model(model, num_epochs=20):
-    """Train the GNN model with synthetic protein interaction data - OPTIMIZED: Reduced epochs"""
+    """Train the GNN model with synthetic protein interaction data.
+
+    This function trains the ProteinGCN model using synthetically generated
+    protein interaction data. The training process is optimized with a
+    reduced number of epochs for efficiency.
+
+    Args:
+        model (ProteinGCN): The GNN model to be trained.
+        num_epochs (int, optional): The number of training epochs.
+            Defaults to 20.
+
+    Returns:
+        ProteinGCN: The trained GNN model.
+    """
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.BCELoss()
@@ -311,7 +425,21 @@ def train_gnn_model(model, num_epochs=20):
     return model
 
 def create_protein_interaction_graph(protein_a, protein_b, features_a, features_b):
-    """Create a protein interaction graph using NetworkX"""
+    """Create a protein interaction graph using NetworkX.
+
+    This function builds a simple graph representing the potential interaction
+    between two proteins. Each protein is a node, and an edge connects them,
+    weighted by the similarity of their features.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+        features_a (np.ndarray): The feature vector for protein A.
+        features_b (np.ndarray): The feature vector for protein B.
+
+    Returns:
+        nx.Graph: A NetworkX graph representing the protein interaction.
+    """
     G = nx.Graph()
     
     # Add nodes for both proteins
@@ -325,7 +453,20 @@ def create_protein_interaction_graph(protein_a, protein_b, features_a, features_
     return G
 
 def predict_gnn_interaction(protein_a, protein_b):
-    """Real GNN prediction for protein interaction"""
+    """Perform a GNN-based prediction for protein interaction.
+
+    This function uses the initialized GNN model to predict the interaction
+    between two proteins. It fetches their features, performs the prediction,
+    and also generates mock interface residues if the confidence is high.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+
+    Returns:
+        dict: A dictionary containing the prediction results, including
+            confidence, model used, and graph-related features.
+    """
     try:
         # Initialize GNN model
         gnn_model = initialize_gnn_model()
@@ -398,7 +539,19 @@ def predict_gnn_interaction(protein_a, protein_b):
         return predict_mock_gnn_interaction(protein_a, protein_b)
 
 def predict_mock_gnn_interaction(protein_a, protein_b):
-    """Fallback mock GNN prediction"""
+    """Fallback mock GNN prediction.
+
+    This function serves as a fallback for GNN predictions. It generates a
+    reproducible mock prediction based on the protein names, which is useful
+    for demonstration or when the GNN model fails.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+
+    Returns:
+        dict: A dictionary with mock prediction results.
+    """
     # Use protein names to generate reproducible predictions
     seed = hash(protein_a + protein_b) % 2**32
     np.random.seed(seed)
@@ -437,11 +590,35 @@ def predict_mock_gnn_interaction(protein_a, protein_b):
 
 @st.cache_data(ttl=86400)  # Cache feature computations
 def get_cached_protein_features(protein_id):
-    """Get protein features with extended caching"""
+    """Get protein features with extended caching.
+
+    This function is a wrapper around `get_protein_features` that adds
+    Streamlit's caching mechanism to store the results for 24 hours. This
+    improves performance by avoiding redundant feature extraction.
+
+    Args:
+        protein_id (str): The identifier of the protein.
+
+    Returns:
+        np.ndarray: The feature vector for the protein.
+    """
     return get_protein_features(protein_id)
 
 def _quick_screening(protein_a, protein_b):
-    """Quick screening using lightweight Random Forest model"""
+    """Perform a quick screening using a lightweight Random Forest model.
+
+    This internal function is used as the first step in a tiered prediction
+    strategy. It uses a simple Random Forest model to get an initial
+    confidence score for a protein interaction.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+
+    Returns:
+        dict: A dictionary containing the confidence score and other
+            screening results.
+    """
     try:
         model, scaler = initialize_single_model('Random Forest')
         if model is None or scaler is None:
@@ -471,7 +648,19 @@ def _quick_screening(protein_a, protein_b):
         return {'confidence': 0.5, 'interface_residues': []}
 
 def compute_similarity_features(features_a, features_b):
-    """Compute similarity features between two protein feature vectors"""
+    """Compute similarity features between two protein feature vectors.
+
+    This function calculates various similarity and distance metrics between
+    two protein feature vectors, such as cosine similarity, Euclidean
+    distance, and Manhattan distance.
+
+    Args:
+        features_a (np.ndarray): The feature vector for the first protein.
+        features_b (np.ndarray): The feature vector for the second protein.
+
+    Returns:
+        np.ndarray: An array containing the computed similarity features.
+    """
     # Ensure both feature vectors have the same length
     min_len = min(len(features_a), len(features_b))
     features_a = features_a[:min_len]
@@ -485,7 +674,18 @@ def compute_similarity_features(features_a, features_b):
     return np.array([cosine_sim, euclidean_dist, manhattan_dist])
 
 def get_model_explanation(model_type, confidence):
-    """Generate explanation for model prediction"""
+    """Generate an explanation for a model's prediction.
+
+    This function provides a human-readable explanation for a given model's
+    prediction and confidence score.
+
+    Args:
+        model_type (str): The type of model that made the prediction.
+        confidence (float): The confidence score of the prediction.
+
+    Returns:
+        str: A string containing the explanation.
+    """
     explanations = {
         'Random Forest': f"The Random Forest model analyzed {20} protein features and achieved {confidence:.2f} confidence. This ensemble method combines multiple decision trees to make robust predictions.",
         'SVM': f"The Support Vector Machine found optimal decision boundaries in high-dimensional protein feature space with {confidence:.2f} confidence.",
@@ -497,7 +697,20 @@ def get_model_explanation(model_type, confidence):
     return explanations.get(model_type, f"Model prediction confidence: {confidence:.2f}")
 
 class GraphTransformer(nn.Module):
-    """Graph Transformer for advanced protein interaction prediction"""
+    """Graph Transformer for advanced protein interaction prediction.
+
+    This class implements a Graph Transformer model, which uses multi-head
+    attention mechanisms to capture complex relationships in protein data.
+    It is designed for more advanced and accurate interaction prediction.
+
+    Attributes:
+        input_embedding (nn.Linear): Embedding layer for input features.
+        attention_layers (nn.ModuleList): List of multi-head attention
+            layers.
+        ffn_layers (nn.ModuleList): List of feed-forward network layers.
+        layer_norms (nn.ModuleList): List of layer normalization layers.
+        classifier (nn.Sequential): Final classification head.
+    """
     
     def __init__(self, input_dim, hidden_dim=128, num_heads=8, num_layers=3):
         super(GraphTransformer, self).__init__()
@@ -541,6 +754,15 @@ class GraphTransformer(nn.Module):
         )
     
     def forward(self, protein_a_features, protein_b_features):
+        """Defines the forward pass for the GraphTransformer model.
+
+        Args:
+            protein_a_features (torch.Tensor): Feature tensor for protein A.
+            protein_b_features (torch.Tensor): Feature tensor for protein B.
+
+        Returns:
+            torch.Tensor: The interaction prediction score.
+        """
         # Embed protein features
         h_a = self.input_embedding(protein_a_features)
         h_b = self.input_embedding(protein_b_features)
@@ -571,7 +793,16 @@ class GraphTransformer(nn.Module):
 
 @st.cache_resource
 def initialize_graph_transformer():
-    """Initialize and load the Graph Transformer model"""
+    """Initialize and load the Graph Transformer model.
+
+    This function initializes the GraphTransformer model. It follows a similar
+    pattern to the other model initializers, attempting to load a pre-trained
+    model and training a new one if necessary.
+
+    Returns:
+        GraphTransformer: The initialized Graph Transformer model. Returns
+            None if initialization fails.
+    """
     try:
         model_path = "models/protein_graph_transformer.pth"
         input_dim = 10  # Protein feature dimension
@@ -596,7 +827,20 @@ def initialize_graph_transformer():
         return None
 
 def train_graph_transformer(model, num_epochs=15):
-    """Train the Graph Transformer model - OPTIMIZED: Reduced epochs"""
+    """Train the Graph Transformer model.
+
+    This function trains the GraphTransformer model using synthetically
+    generated data. The training process is optimized with a reduced number
+    of epochs.
+
+    Args:
+        model (GraphTransformer): The Graph Transformer model to train.
+        num_epochs (int, optional): The number of training epochs.
+            Defaults to 15.
+
+    Returns:
+        GraphTransformer: The trained model.
+    """
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     criterion = nn.BCELoss()
@@ -653,7 +897,19 @@ def train_graph_transformer(model, num_epochs=15):
     return model
 
 def predict_graph_transformer_interaction(protein_a, protein_b):
-    """Advanced Graph Transformer prediction for protein interaction"""
+    """Perform an advanced Graph Transformer prediction for protein interaction.
+
+    This function uses the GraphTransformer model to predict interactions. It
+    also includes a more sophisticated method for predicting interface
+    residues based on an attention-like mechanism.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+
+    Returns:
+        dict: A dictionary containing the detailed prediction results.
+    """
     try:
         # Initialize Graph Transformer model
         gt_model = initialize_graph_transformer()
@@ -729,7 +985,18 @@ def predict_graph_transformer_interaction(protein_a, protein_b):
         return predict_gnn_interaction(protein_a, protein_b)
 
 class EGNNLayer(nn.Module):
-    """Simplified Equivariant Graph Neural Network layer for protein interaction prediction"""
+    """Simplified Equivariant Graph Neural Network layer.
+
+    This class implements a simplified version of an Equivariant Graph
+    Neural Network (EGNN) layer. EGNNs are designed to be equivariant to
+    rotations and translations, making them suitable for processing 3D
+    structural data like protein coordinates.
+
+    Attributes:
+        message_net (nn.Sequential): Neural network for creating messages.
+        node_net (nn.Sequential): Neural network for updating node features.
+        coord_net (nn.Sequential): Neural network for updating coordinates.
+    """
     
     def __init__(self, hidden_dim):
         super(EGNNLayer, self).__init__()
@@ -757,6 +1024,17 @@ class EGNNLayer(nn.Module):
         )
     
     def forward(self, h, coords, edges):
+        """Defines the forward pass for the EGNNLayer.
+
+        Args:
+            h (torch.Tensor): Node features.
+            coords (torch.Tensor): Node coordinates.
+            edges (torch.Tensor): Edge indices.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: A tuple containing the updated
+                node features and coordinates.
+        """
         # h: node features [N, hidden_dim]
         # coords: node coordinates [N, 3] (simplified as 3D positions)
         # edges: edge indices [2, E]
@@ -787,7 +1065,23 @@ class EGNNLayer(nn.Module):
         return h_new, coords_new
 
 class ProteinEGNN(nn.Module):
-    """EGNN-based model for protein-protein interaction and site prediction"""
+    """EGNN-based model for protein-protein interaction and site prediction.
+
+    This class defines a model that combines EGNN layers with a Graph
+    Transformer to predict both protein-protein interactions and the
+    specific residues involved in the interaction (interface sites).
+
+    Attributes:
+        node_embedding (nn.Linear): Embedding layer for input node features.
+        egnn_layers (nn.ModuleList): List of EGNN layers.
+        transformer (nn.MultiheadAttention): Attention layer for global context.
+        transformer_norm (nn.LayerNorm): Layer normalization for the
+            transformer output.
+        ppi_classifier (nn.Sequential): Classifier for the overall
+            interaction prediction.
+        site_predictor (nn.Sequential): Classifier for residue-level site
+            prediction.
+    """
     
     def __init__(self, input_dim, hidden_dim=128, num_layers=4):
         super(ProteinEGNN, self).__init__()
@@ -825,6 +1119,19 @@ class ProteinEGNN(nn.Module):
         )
     
     def forward(self, node_features, coords, edges, protein_assignment):
+        """Defines the forward pass for the ProteinEGNN model.
+
+        Args:
+            node_features (torch.Tensor): Node features for all residues.
+            coords (torch.Tensor): 3D coordinates for all residues.
+            edges (torch.Tensor): Edge indices for the graph.
+            protein_assignment (torch.Tensor): Tensor indicating which
+                protein each residue belongs to.
+
+        Returns:
+            tuple: A tuple containing the PPI score, site scores, and
+                final node embeddings.
+        """
         # Embed node features
         h = self.node_embedding(node_features)  # [N, hidden_dim]
         
@@ -856,7 +1163,16 @@ class ProteinEGNN(nn.Module):
 
 @st.cache_resource
 def initialize_egnn_model():
-    """Initialize and load the EGNN model"""
+    """Initialize and load the EGNN model.
+
+    This function initializes the ProteinEGNN model. It handles loading a
+    pre-trained model from a file or training a new one if the file is not
+    found.
+
+    Returns:
+        ProteinEGNN: The initialized EGNN model, or None if initialization
+            fails.
+    """
     try:
         model_path = "models/protein_egnn_model.pth"
         input_dim = 20  # Expanded protein feature dimension
@@ -879,7 +1195,20 @@ def initialize_egnn_model():
         return None
 
 def train_egnn_model(model, num_epochs=10):
-    """Train the EGNN model with synthetic protein interaction data - OPTIMIZED: Reduced epochs"""
+    """Train the EGNN model with synthetic protein interaction data.
+
+    This function trains the ProteinEGNN model using synthetically generated
+    protein complex data. The training is optimized with a reduced number of
+    epochs.
+
+    Args:
+        model (ProteinEGNN): The ProteinEGNN model to be trained.
+        num_epochs (int, optional): The number of training epochs.
+            Defaults to 10.
+
+    Returns:
+        ProteinEGNN: The trained model.
+    """
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     ppi_criterion = nn.BCELoss()
@@ -966,7 +1295,20 @@ def train_egnn_model(model, num_epochs=10):
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_residue_level_features(protein_sequence: str) -> np.ndarray:
-    """Generate detailed residue-level features from protein sequence"""
+    """Generate detailed residue-level features from a protein sequence.
+
+    This function creates a feature vector for each residue in a protein
+    sequence. The features include physicochemical properties of the amino
+    acid, positional information, local sequence context, and secondary
+    structure propensity.
+
+    Args:
+        protein_sequence (str): The amino acid sequence of the protein.
+
+    Returns:
+        np.ndarray: A 2D numpy array where each row corresponds to a
+            residue and each column is a feature.
+    """
     
     # Amino acid properties (20 amino acids)
     aa_properties = {
@@ -1040,7 +1382,19 @@ def get_residue_level_features(protein_sequence: str) -> np.ndarray:
 
 @st.cache_data(ttl=86400)  # Extended caching: 24 hours
 def get_protein_coordinates(protein_id: str) -> Optional[np.ndarray]:
-    """Attempt to get 3D coordinates for protein residues from PDB/AlphaFold"""
+    """Attempt to get 3D coordinates for protein residues.
+
+    This function tries to retrieve 3D coordinates for a protein's residues,
+    preferentially from AlphaFold. If real coordinates are not available, it
+    generates a realistic backbone structure as a fallback.
+
+    Args:
+        protein_id (str): The identifier of the protein.
+
+    Returns:
+        np.ndarray, optional: A numpy array of 3D coordinates for each
+            residue, or None if coordinates cannot be obtained.
+    """
     try:
         # First try AlphaFold
         from utils.protein_utils import get_alphafold_structure_url
@@ -1072,7 +1426,18 @@ def get_protein_coordinates(protein_id: str) -> Optional[np.ndarray]:
     return None
 
 def generate_realistic_backbone(n_residues: int) -> np.ndarray:
-    """Generate realistic protein backbone coordinates"""
+    """Generate realistic protein backbone coordinates.
+
+    This function creates a plausible 3D backbone structure for a protein of
+    a given length using a constrained random walk. This is used as a
+    fallback when real structural data is not available.
+
+    Args:
+        n_residues (int): The number of residues in the protein.
+
+    Returns:
+        np.ndarray: A numpy array of 3D coordinates for the protein backbone.
+    """
     # Generate a realistic protein fold using a random walk with constraints
     np.random.seed(42)  # For reproducibility
     
@@ -1106,7 +1471,20 @@ def generate_realistic_backbone(n_residues: int) -> np.ndarray:
     return coords
 
 def create_residue_graph(protein_sequence: str, coordinates: Optional[np.ndarray] = None) -> nx.Graph:
-    """Create a residue-level graph with realistic connectivity"""
+    """Create a residue-level graph with realistic connectivity.
+
+    This function constructs a graph where each node is a residue. Edges are
+    added between sequential residues and also between residues that are
+    spatially close, if coordinates are provided.
+
+    Args:
+        protein_sequence (str): The amino acid sequence of the protein.
+        coordinates (np.ndarray, optional): The 3D coordinates of the
+            residues. Defaults to None.
+
+    Returns:
+        nx.Graph: A NetworkX graph of the protein's residue connectivity.
+    """
     n_residues = len(protein_sequence)
     G = nx.Graph()
     
@@ -1141,7 +1519,23 @@ def create_residue_graph(protein_sequence: str, coordinates: Optional[np.ndarray
 
 def create_inter_protein_edges(coords_a: np.ndarray, coords_b: np.ndarray, 
                               n_residues_a: int, interface_threshold: float = 10.0) -> List[Tuple[int, int]]:
-    """Create edges between proteins based on spatial proximity"""
+    """Create edges between proteins based on spatial proximity.
+
+    This function identifies potential interaction edges between two proteins
+    by finding pairs of residues (one from each protein) that are within a
+    specified distance threshold.
+
+    Args:
+        coords_a (np.ndarray): Coordinates of the residues of protein A.
+        coords_b (np.ndarray): Coordinates of the residues of protein B.
+        n_residues_a (int): The number of residues in protein A.
+        interface_threshold (float, optional): The distance threshold for
+            creating an edge. Defaults to 10.0.
+
+    Returns:
+        list[tuple[int, int]]: A list of tuples, where each tuple represents
+            an edge between a residue in protein A and a residue in protein B.
+    """
     edges = []
     
     # Calculate distances between all pairs of residues from different proteins
@@ -1155,7 +1549,21 @@ def create_inter_protein_edges(coords_a: np.ndarray, coords_b: np.ndarray,
     return edges
 
 def predict_egnn_ppi_sites(protein_a, protein_b):
-    """EGNN-based prediction for protein-protein interaction sites"""
+    """Perform EGNN-based prediction for protein-protein interaction sites.
+
+    This is the most advanced prediction function, using the ProteinEGNN model
+    to predict not only the interaction confidence but also the specific
+    residues that form the interaction interface.
+
+    Args:
+        protein_a (str): The identifier for the first protein.
+        protein_b (str): The identifier for the second protein.
+
+    Returns:
+        dict: A dictionary containing comprehensive prediction results,
+            including interaction confidence and a list of predicted
+            interface residues.
+    """
     try:
         # Initialize EGNN model
         egnn_model = initialize_egnn_model()
