@@ -32,7 +32,7 @@ ChEMBL. **Every number links back to its source, and nothing is simulated.**
 | 🕸️ | **Network & pathways:** the STRING neighbourhood of any protein, coloured by evidence type, with pathway and disease enrichment (FDR-controlled) | STRING v12.5 |
 | 🧬 | **Protein:** function, disease associations, Reactome pathways, domains, sequence properties | UniProt · Open Targets |
 | 🔬 | **Structure & interfaces:** AlphaFold models coloured by pLDDT, a PAE heatmap, experimentally solved complexes of a protein pair, and **interface residues computed from real coordinates** in an interactive Mol\* viewer | AlphaFold DB · RCSB PDB · gemmi · Mol\* |
-| 🍵 | **EGCG showcase:** green-tea catechin targets from ChEMBL ranked by evidence (with assay-interference caveats), then the pathways and diseases they point to | ChEMBL · STRING |
+| 🍵 | **EGCG showcase:** green-tea catechin targets from ChEMBL ranked by evidence (with assay-interference caveats), then the pathways and diseases they point to. Follows on from a [published LC-MS/MS study of Assam tea](#related-research-paper) | ChEMBL · STRING |
 | 📤 | **Your data:** paste a gene list or upload an interaction table and get the same pathway analysis | STRING |
 
 Pages have **shareable permalinks**, e.g. `/structure?a=TP53&b=MDM2` or
@@ -127,8 +127,65 @@ uv run ruff check . && uv run ruff format --check .
 To refresh the EGCG dataset from the current ChEMBL release, run `python scripts/build_egcg_dataset.py`.
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Related research paper
+
+The EGCG showcase follows on from a peer-reviewed study co-authored by ProteinViz's author:
+
+> Pulimamidi SS, Naik DD, Yadav M, Suryawanshi KG, Marathe SS, Jorvekar SB, Ponneganti S,
+> **Ahmed S**, Hazarika A, Borkar RM. **Seasonal dynamics of phytometabolites content in Assam tea,
+> *Camellia sinensis* var. *assamica* by LC-MS/MS: Implications for quality.**
+> *Journal of Food Composition and Analysis* 2024; 134: 106546. ISSN 0889-1575.
+> <https://doi.org/10.1016/j.jfca.2024.106546>
+> ([ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0889157524005805))
+
+**What the study did.** It followed how the phytometabolite content of Assam tea
+(*Camellia sinensis* var. *assamica*, the main tea variety of Northeast India) changes with the
+season. Buds and dormant leaves (*banjhi*) were harvested in the monsoon, autumn and winter, and
+an LC-MS/MS method was developed and validated to quantify the metabolites. The aim was to help
+growers choose harvest times.
+
+**What it found.** Epigallocatechin gallate (EGCG) was the most abundant catechin, and its level
+depended strongly on the harvest season:
+
+| Metabolite | Sample | Monsoon (µg/mg) | Later season (µg/mg) |
+|---|---|---|---|
+| EGCG | Bud | 78.01 ± 13.31 to 125.21 ± 5.65 | 17.86 ± 1.22 to 51.11 ± 1.21 (winter) |
+| EGCG | Banjhi leaf | 203.86 ± 21.06 to 312.58 ± 28.23 | 74.43 ± 15.22 to 97.52 ± 8.47 (autumn) |
+| Epicatechin gallate | Bud | 17.04 ± 2.57 to 24.78 ± 1.15 | 5.36 ± 0.39 to 11.16 ± 1.74 (winter) |
+| Epicatechin gallate | Banjhi leaf | 63.61 ± 1.60 to 72.72 ± 1.23 | 12.73 ± 2.07 to 15.35 ± 1.33 (autumn) |
+
+Catechin hydrate, caffeine, gallic acid, theanine and theaflavin also varied by season. The
+authors conclude that harvest timing matters for tea quality and for cultivation and processing
+practices under a changing environment.
+
+**How it relates to ProteinViz.** The paper measures *how much* EGCG and related metabolites the
+tea plant contains. The [EGCG showcase](https://proteinviz.streamlit.app/egcg) asks the next
+question: *which proteins and disease pathways* is EGCG reported to act on? The values above are
+quoted from the paper's abstract. ProteinViz does not bundle or re-analyse the paper's data, and
+the showcase's activity records come from ChEMBL.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{pulimamidi2024seasonal,
+  title   = {Seasonal dynamics of phytometabolites content in {Assam} tea, {\textit{Camellia sinensis}} var. \textit{assamica} by {LC-MS/MS}: Implications for quality},
+  author  = {Pulimamidi, Sai Sharanya and Naik, Dhanavath Dattu and Yadav, Mukul and Suryawanshi, Ketan G. and Marathe, Siddhi S. and Jorvekar, Sachin B. and Ponneganti, Srikanth and Ahmed, Shekib and Hazarika, Abhijeet and Borkar, Roshan M.},
+  journal = {Journal of Food Composition and Analysis},
+  volume  = {134},
+  pages   = {106546},
+  year    = {2024},
+  issn    = {0889-1575},
+  doi     = {10.1016/j.jfca.2024.106546},
+  url     = {https://www.sciencedirect.com/science/article/pii/S0889157524005805}
+}
+```
+
+</details>
+
 ## Citing
 
+If you use the EGCG showcase, please also cite the paper above.
 If ProteinViz helps your work, please cite it (see [CITATION.cff](CITATION.cff)) **and** the
 resources it builds on: Open Targets, STRING, UniProt, RCSB PDB, AlphaFold DB, ChEMBL and Mol\*.
 See [DATA_LICENSES.md](DATA_LICENSES.md) for licences and references.

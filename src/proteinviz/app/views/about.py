@@ -1,6 +1,7 @@
 import streamlit as st
 
 from proteinviz import __version__
+from proteinviz.app import common as c
 
 st.title("📖 About & cite")
 st.markdown(
@@ -37,8 +38,39 @@ behind it, using only public data that is traceable to its source.
 * Interaction prediction for unseen pairs is planned (v0.3) with a leakage-free benchmark. Until then
   ProteinViz shows only observed evidence.
 
+### Related research paper
+The EGCG showcase follows on from a peer-reviewed study co-authored by ProteinViz's author:
+
+> {c.TEA_PAPER_CITATION}
+
+**What the study did.** It followed how the phytometabolite content of Assam tea
+(*Camellia sinensis* var. *assamica*, the main tea variety of Northeast India) changes with the
+season. Buds and dormant leaves (*banjhi*) were harvested in the monsoon, autumn and winter, and
+an LC-MS/MS method was developed and validated to quantify the metabolites. The aim was to help
+growers choose harvest times.
+
+**What it found.** EGCG was the most abundant catechin, and its level depended strongly on the
+harvest season:
+
+| Metabolite | Sample | Monsoon (µg/mg) | Later season (µg/mg) |
+|---|---|---|---|
+| EGCG | Bud | 78.01 ± 13.31 to 125.21 ± 5.65 | 17.86 ± 1.22 to 51.11 ± 1.21 (winter) |
+| EGCG | Banjhi leaf | 203.86 ± 21.06 to 312.58 ± 28.23 | 74.43 ± 15.22 to 97.52 ± 8.47 (autumn) |
+| Epicatechin gallate | Bud | 17.04 ± 2.57 to 24.78 ± 1.15 | 5.36 ± 0.39 to 11.16 ± 1.74 (winter) |
+| Epicatechin gallate | Banjhi leaf | 63.61 ± 1.60 to 72.72 ± 1.23 | 12.73 ± 2.07 to 15.35 ± 1.33 (autumn) |
+
+Catechin hydrate, caffeine, gallic acid, theanine and theaflavin also varied by season. The
+authors conclude that harvest timing matters for tea quality and for cultivation and processing
+practices under a changing environment.
+
+**How it relates to ProteinViz.** The paper measures *how much* EGCG and related metabolites the
+tea plant contains. The EGCG showcase asks the next question: *which proteins and disease
+pathways* is EGCG reported to act on? The values above are quoted from the paper's abstract.
+ProteinViz does not bundle or re-analyse the paper's data, and the showcase's activity records
+come from ChEMBL.
+
 ### Citing
-Please cite ProteinViz (see `CITATION.cff` in the repository) **and the underlying resources**:
+If you use the EGCG showcase, please also cite the paper above. Please cite ProteinViz (see `CITATION.cff` in the repository) **and the underlying resources**:
 Open Targets (Ochoa et al.), STRING (Szklarczyk et al.), UniProt (UniProt Consortium),
 RCSB PDB (Burley et al.), AlphaFold DB (Varadi et al.), ChEMBL (Zdrazil et al.),
 Mol*/MolViewSpec (Sehnal et al.; Bittrich et al.).
