@@ -7,14 +7,22 @@ import streamlit as st
 from proteinviz import __version__
 from proteinviz.app.navigation import sections
 
-st.set_page_config(page_title="ProteinViz", page_icon="🧬", layout="wide")
+REPO = "https://github.com/shekibahmed/ProteinViz"
+
+st.set_page_config(
+    page_title="ProteinViz",
+    page_icon="🧬",
+    layout="wide",
+    menu_items={
+        "Get help": REPO,
+        "Report a bug": f"{REPO}/issues",
+        "About": f"**ProteinViz v{__version__}** · open source (MIT) · [GitHub repository]({REPO})",
+    },
+)
 
 nav = st.navigation(sections())
 with st.sidebar:
-    st.caption(
-        f"ProteinViz v{__version__} · open source (MIT) · "
-        "[GitHub](https://github.com/shekibahmed/ProteinViz)"
-    )
+    st.caption(f"ProteinViz v{__version__} · open source (MIT) · [GitHub]({REPO})")
     st.caption(
         "For research and hypothesis generation only. Not medical advice. "
         "Every value links to its source database."
