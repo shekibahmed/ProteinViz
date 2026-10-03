@@ -24,7 +24,7 @@ def run_app(
     import importlib.util
 
     if importlib.util.find_spec("streamlit") is None:
-        typer.echo("The app needs extra dependencies: pip install 'proteinviz[app]'", err=True)
+        typer.echo("Streamlit is missing; reinstall with: pip install proteinviz", err=True)
         raise typer.Exit(1)
     entry = Path(__file__).parent / "app" / "streamlit_app.py"
     cmd = [

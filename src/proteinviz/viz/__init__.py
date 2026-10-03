@@ -1,1 +1,1 @@
-"""Visual builders (Mol* scenes, networks, plots). Requires the ``[app]`` extra."""
+"""Visual builders (Mol* scenes, networks, plots). Uses molviewspec and plotly."""

@@ -1250,32 +1250,26 @@ dependencies = [
     { name = "biopython" },
     { name = "gemmi" },
     { name = "httpx" },
+    { name = "molviewspec" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "networkx", version = "3.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "openpyxl" },
     { name = "pandas" },
     { name = "platformdirs" },
+    { name = "plotly" },
     { name = "pydantic" },
+    { name = "streamlit" },
     { name = "typer" },
 ]
 
 [package.optional-dependencies]
-app = [
-    { name = "molviewspec" },
-    { name = "openpyxl" },
-    { name = "plotly" },
-    { name = "streamlit" },
-]
 dev = [
-    { name = "molviewspec" },
-    { name = "openpyxl" },
-    { name = "plotly" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
-    { name = "streamlit" },
 ]
 
 [package.metadata]
@@ -1283,20 +1277,19 @@ requires-dist = [
     { name = "biopython", specifier = ">=1.84" },
     { name = "gemmi", specifier = ">=0.7" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "molviewspec", marker = "extra == 'app'", specifier = ">=1.8" },
+    { name = "molviewspec", specifier = ">=1.8" },
     { name = "networkx", specifier = ">=3.2" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "openpyxl", marker = "extra == 'app'", specifier = ">=3.1" },
+    { name = "openpyxl", specifier = ">=3.1" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "platformdirs", specifier = ">=4.0" },
-    { name = "plotly", marker = "extra == 'app'", specifier = ">=5.24" },
+    { name = "plotly", specifier = ">=5.24" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "proteinviz", extras = ["app"], marker = "extra == 'dev'" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
-    { name = "streamlit", marker = "extra == 'app'", specifier = ">=1.45" },
+    { name = "streamlit", specifier = ">=1.45" },
     { name = "typer", specifier = ">=0.12" },
 ]
 provides-extras = ["app", "dev"]

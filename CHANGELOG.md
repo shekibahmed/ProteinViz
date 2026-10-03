@@ -2,8 +2,11 @@
 
 ## Unreleased
 - Deploy target switched to **Streamlit Community Cloud**, because Hugging Face Docker Spaces now
-  need a paid plan. Added the repo-root `streamlit_app.py` and `requirements.txt`, plus
+  need a paid plan. Added the repo-root `streamlit_app.py`, plus
   `docs/DEPLOY.md`. Removed the Hugging Face deploy workflow.
+- Fix: the web-app libraries (streamlit, molviewspec, plotly, openpyxl) are now base dependencies.
+  Community Cloud installs from `uv.lock`, which skipped the `[app]` extra, so pages using
+  Mol\* or Plotly failed on the live demo. `proteinviz[app]` remains as an alias.
 - Fix: links on the Home page now resolve whichever script launches the app (pages defined once in
   `proteinviz.app.navigation`).
 

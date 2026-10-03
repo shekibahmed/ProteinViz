@@ -15,8 +15,8 @@ Community Cloud runs the app straight from this public GitHub repository.
 5. Click **Deploy**. The first build takes a few minutes. Later pushes to `main` redeploy
    automatically.
 
-Dependencies come from `requirements.txt` (which installs this repo with the `[app]` extra), and
-settings from `.streamlit/config.toml`. Free apps go to sleep after a period without visitors and
+Community Cloud installs dependencies from `uv.lock` (it takes priority over other dependency
+files), and settings come from `.streamlit/config.toml`. Free apps go to sleep after a period without visitors and
 wake on the next visit, which takes about 30 seconds.
 
 After it is live, put the URL in the README badge and in the GitHub repo's **About → Website** field.

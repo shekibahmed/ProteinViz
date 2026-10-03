@@ -12,7 +12,7 @@ WORKDIR /home/user/app
 COPY --chown=user pyproject.toml README.md LICENSE DATA_LICENSES.md ./
 COPY --chown=user src ./src
 COPY --chown=user .streamlit ./.streamlit
-RUN pip install ".[app]"
+RUN pip install .
 
 USER user
 EXPOSE 7860
