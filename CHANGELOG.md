@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Fix: interface calculations now also reject contacts with copies shifted by whole unit cells,
+  which gemmi reports with the identity operator. A test builds such a copy and checks it
+  contacts nothing. Real interfaces (e.g. 1YCR) are unchanged.
 - Deploy target switched to **Streamlit Community Cloud**, because Hugging Face Docker Spaces now
   need a paid plan. Added the repo-root `streamlit_app.py`, plus
   `docs/DEPLOY.md`. Removed the Hugging Face deploy workflow.
