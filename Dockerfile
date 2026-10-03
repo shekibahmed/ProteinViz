@@ -1,4 +1,4 @@
-# ProteinViz web app. Runs on a free Hugging Face Space (Docker SDK, CPU basic) or any host.
+# ProteinViz web app for self-hosting (any CPU host). The free hosted demo uses Streamlit Community Cloud.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,7 +6,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PROTEINVIZ_CACHE_DIR=/tmp/proteinviz-cache
 
-# Hugging Face Spaces run containers as UID 1000.
 RUN useradd -m -u 1000 user
 WORKDIR /home/user/app
 

@@ -1,5 +1,7 @@
 import streamlit as st
 
+from proteinviz.app.navigation import page
+
 st.title("🧬 ProteinViz")
 st.markdown(
     "#### Explore disease pathways from genes to proteins, interactions, 3D structures and compounds."
@@ -17,35 +19,35 @@ c1, c2, c3 = st.columns(3)
 with c1:
     st.subheader("1 · Start from a disease")
     st.markdown("Top genetic and clinical targets, enriched pathways, and drugs already in trials.")
-    st.page_link("views/disease.py", label="Disease explorer", icon="🩺")
+    st.page_link(page("disease"), label="Disease explorer", icon="🩺")
     st.caption("e.g. Alzheimer disease, Parkinson disease, type 2 diabetes")
 with c2:
     st.subheader("2 · Map the network")
     st.markdown("STRING interaction partners, evidence channels and KEGG/Reactome enrichment.")
-    st.page_link("views/network.py", label="Network & pathways", icon="🕸️")
+    st.page_link(page("network"), label="Network & pathways", icon="🕸️")
     st.caption("e.g. TP53, APP, SNCA")
 with c3:
     st.subheader("3 · Look at the structure")
     st.markdown("AlphaFold confidence, solved complexes and residue-level interfaces in Mol*.")
-    st.page_link("views/structure.py", label="Structure & interfaces", icon="🔬")
+    st.page_link(page("structure"), label="Structure & interfaces", icon="🔬")
     st.caption("e.g. TP53 + MDM2 → PDB 1YCR")
 
 st.divider()
 st.subheader("Try a worked example")
 e1, e2, e3 = st.columns(3)
 e1.page_link(
-    "views/disease.py",
+    page("disease"),
     label="Alzheimer disease → targets & pathways",
     icon="➡️",
     query_params={"id": "MONDO_0004975"},
 )
 e2.page_link(
-    "views/structure.py",
+    page("structure"),
     label="p53 · MDM2 interface (1YCR)",
     icon="➡️",
     query_params={"a": "TP53", "b": "MDM2", "pdb": "1YCR"},
 )
-e3.page_link("views/egcg.py", label="Green-tea EGCG: evidence-tiered targets", icon="➡️")
+e3.page_link(page("egcg"), label="Green-tea EGCG: evidence-tiered targets", icon="➡️")
 
 st.divider()
 st.markdown(
