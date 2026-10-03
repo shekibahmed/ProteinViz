@@ -1,0 +1,2 @@
+# Used by Streamlit Community Cloud. Installs this repo with the web-app extras.
+.[app]

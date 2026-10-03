@@ -5,7 +5,9 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
-ENTRY = str(Path(__file__).parents[1] / "src" / "proteinviz" / "app" / "streamlit_app.py")
+ROOT = Path(__file__).parents[1]
+ENTRY = str(ROOT / "src" / "proteinviz" / "app" / "streamlit_app.py")
+CLOUD_ENTRY = str(ROOT / "streamlit_app.py")  # used by Streamlit Community Cloud
 
 PAGES = [
     ("views/home.py", {}),
@@ -52,3 +54,13 @@ def test_upload_gene_list_enrichment():
     at.text_area[0].input("SNCA\nLRRK2\nPRKN\nPINK1\nPARK7").run()
     assert not at.exception
     assert any("Pathway enrichment for 5" in s.value for s in at.subheader)
+
+
+@pytest.mark.parametrize("entry", [ENTRY, CLOUD_ENTRY], ids=["package", "cloud"])
+def test_home_links_resolve_from_any_entry_point(entry):
+    """page_link targets must resolve whichever script launched the app."""
+    at = AppTest.from_file(entry, default_timeout=120)
+    at.run()
+    # Home is the default page and renders st.page_link for every section.
+    assert not at.exception, [e.value for e in at.exception]
+    assert any("ProteinViz" in t.value for t in at.title)

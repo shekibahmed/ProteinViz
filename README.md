@@ -48,6 +48,10 @@ Pages have **shareable permalinks**, e.g. `/structure?a=TP53&b=MDM2` or
 </tr>
 </table>
 
+## Try it online
+
+**Live demo:** _coming soon on Streamlit Community Cloud_ (free; see [docs/DEPLOY.md](docs/DEPLOY.md)).
+
 ## Quick start
 
 ```bash
