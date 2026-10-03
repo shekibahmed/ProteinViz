@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Docs: the related research paper (Pulimamidi et al., *J. Food Compos. Anal.* 2024,
+  [doi:10.1016/j.jfca.2024.106546](https://doi.org/10.1016/j.jfca.2024.106546)) is now described
+  and cited in the README, on the app's Home, EGCG and About pages, and in `CITATION.cff`.
 - Fix: interface calculations now also reject contacts with copies shifted by whole unit cells,
   which gemmi reports with the identity operator. A test builds such a copy and checks it
   contacts nothing. Real interfaces (e.g. 1YCR) are unchanged.

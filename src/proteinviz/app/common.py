@@ -14,6 +14,16 @@ from proteinviz.sources import alphafold, opentargets, rcsb, string_db, uniprot
 T = TypeVar("T")
 TTL = 24 * 3600
 
+# The tea phytometabolite study that the EGCG showcase follows on from.
+TEA_PAPER_DOI = "10.1016/j.jfca.2024.106546"
+TEA_PAPER_URL = f"https://doi.org/{TEA_PAPER_DOI}"
+TEA_PAPER_CITATION = (
+    "Pulimamidi SS, Naik DD, Yadav M, Suryawanshi KG, Marathe SS, Jorvekar SB, Ponneganti S, "
+    "Ahmed S, Hazarika A, Borkar RM. Seasonal dynamics of phytometabolites content in Assam tea, "
+    "*Camellia sinensis* var. *assamica* by LC-MS/MS: Implications for quality. "
+    f"*Journal of Food Composition and Analysis* 2024; 134: 106546. [doi:{TEA_PAPER_DOI}]({TEA_PAPER_URL})"
+)
+
 
 def attempt(fn: Callable[..., T], *args: Any, **kwargs: Any) -> T | None:
     """Run a core call; show a clear message instead of a traceback on known failures."""

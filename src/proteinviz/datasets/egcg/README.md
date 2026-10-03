@@ -24,3 +24,10 @@ built by `scripts/build_egcg_dataset.py`. `metadata.json` records the ChEMBL rel
 EGCG is a catechol/pyrogallol polyphenol and a known assay-interference compound (aggregation,
 redox cycling, covalent reactivity). Treat single biochemical hits with caution, and prefer targets
 in the top tier that are also confirmed in cellular or orthogonal assays.
+
+## Related research
+The showcase follows on from Pulimamidi et al., "Seasonal dynamics of phytometabolites content in
+Assam tea, *Camellia sinensis* var. *assamica* by LC-MS/MS: Implications for quality",
+*Journal of Food Composition and Analysis* 134 (2024) 106546,
+<https://doi.org/10.1016/j.jfca.2024.106546>. That study quantified EGCG in tea. Its measurements
+are not part of this dataset, which contains only ChEMBL records.

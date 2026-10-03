@@ -1,5 +1,6 @@
 import streamlit as st
 
+from proteinviz.app import common as c
 from proteinviz.app.navigation import page
 
 st.title("🧬 ProteinViz")
@@ -51,11 +52,15 @@ e3.page_link(page("egcg"), label="Green-tea EGCG: evidence-tiered targets", icon
 
 st.divider()
 st.markdown(
-    """
+    f"""
 **Data sources:** [Open Targets](https://platform.opentargets.org) ·
 [STRING](https://string-db.org) · [UniProt](https://www.uniprot.org) ·
 [RCSB PDB](https://www.rcsb.org) · [AlphaFold DB](https://alphafold.ebi.ac.uk) ·
 [ChEMBL](https://www.ebi.ac.uk/chembl/) · [Reactome](https://reactome.org)
+
+**Related research paper:** the EGCG showcase follows on from a published study of Assam tea
+that the author of ProteinViz co-authored. {c.TEA_PAPER_CITATION}
+See **About & cite** for a summary.
 
 ProteinViz is a hypothesis-generation tool for researchers. Associations and pathway enrichments
 are evidence to follow up, not conclusions. See **About & cite** for methods and limitations.

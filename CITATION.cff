@@ -24,3 +24,35 @@ abstract: >-
   targets, enriched pathways, interaction networks, 3D structures with
   coordinate-derived interface residues, and compound activities, with
   provenance recorded for every result.
+references:
+  - type: article
+    title: "Seasonal dynamics of phytometabolites content in Assam tea, Camellia sinensis var. assamica by LC-MS/MS: Implications for quality"
+    authors:
+      - family-names: Pulimamidi
+        given-names: Sai Sharanya
+      - family-names: Naik
+        given-names: Dhanavath Dattu
+      - family-names: Yadav
+        given-names: Mukul
+      - family-names: Suryawanshi
+        given-names: Ketan G.
+      - family-names: Marathe
+        given-names: Siddhi S.
+      - family-names: Jorvekar
+        given-names: Sachin B.
+      - family-names: Ponneganti
+        given-names: Srikanth
+      - family-names: Ahmed
+        given-names: Shekib
+      - family-names: Hazarika
+        given-names: Abhijeet
+      - family-names: Borkar
+        given-names: Roshan M.
+    journal: "Journal of Food Composition and Analysis"
+    volume: 134
+    start: 106546
+    year: 2024
+    issn: 0889-1575
+    doi: 10.1016/j.jfca.2024.106546
+    url: "https://www.sciencedirect.com/science/article/pii/S0889157524005805"
+    notes: "Related study behind the EGCG showcase; its data are not bundled with ProteinViz."

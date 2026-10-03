@@ -14,6 +14,23 @@ c.page_header(
     "pathways and diseases the well-supported targets point to.",
 )
 st.warning(egcg.INTERFERENCE_NOTE, icon="⚠️")
+with st.expander("📄 Related research paper: seasonal EGCG content of Assam tea (LC-MS/MS)"):
+    st.markdown(
+        f"""
+{c.TEA_PAPER_CITATION}
+
+This showcase follows on from a study co-authored by ProteinViz's author. It quantified
+phytometabolites in buds and dormant (*banjhi*) leaves of Assam tea across the monsoon, autumn
+and winter with a validated LC-MS/MS method. EGCG was the most abundant catechin: in buds it fell
+from 78.01 ± 13.31 to 125.21 ± 5.65 µg/mg in the monsoon to 17.86 ± 1.22 to 51.11 ± 1.21 µg/mg in
+winter, and in banjhi leaves from 203.86 ± 21.06 to 312.58 ± 28.23 µg/mg in the monsoon to
+74.43 ± 15.22 to 97.52 ± 8.47 µg/mg in autumn.
+
+The paper measures how much EGCG the plant contains. This page asks which proteins and pathways
+EGCG is reported to act on. The paper's measurements are not part of the dataset below, which
+comes from ChEMBL. See **About & cite** for a fuller summary.
+"""
+    )
 
 
 @st.cache_data
