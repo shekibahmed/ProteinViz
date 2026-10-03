@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use ProteinViz, please cite it as below, together with the data resources it uses."
+title: "ProteinViz: a provenance-first explorer for disease pathways, protein interactions and structures"
+type: software
+authors:
+  - family-names: Ahmed
+    given-names: Shekib
+    # orcid: https://orcid.org/0000-0000-0000-0000  # add your ORCID iD
+version: 0.2.0
+date-released: 2026-10-03
+license: MIT
+repository-code: "https://github.com/shekibahmed/ProteinViz"
+keywords:
+  - bioinformatics
+  - protein-protein interaction
+  - disease pathways
+  - structural biology
+  - AlphaFold
+  - Open Targets
+  - STRING
+abstract: >-
+  ProteinViz chains public resources (Open Targets, STRING, UniProt, RCSB PDB,
+  AlphaFold DB and ChEMBL) into one workflow from a disease to its associated
+  targets, enriched pathways, interaction networks, 3D structures with
+  coordinate-derived interface residues, and compound activities, with
+  provenance recorded for every result.

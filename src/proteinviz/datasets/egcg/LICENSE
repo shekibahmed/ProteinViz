@@ -1,0 +1,7 @@
+The data files in this directory (egcg_chembl_activities.csv, metadata.json) are derived from
+ChEMBL (https://www.ebi.ac.uk/chembl/), © EMBL-EBI, and are licensed under the
+Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0):
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Attribution: Zdrazil B. et al. The ChEMBL Database in 2023: a drug discovery platform spanning
+multiple bioactivity data types and time periods. Nucleic Acids Res. 2024;52(D1):D1180–D1192.

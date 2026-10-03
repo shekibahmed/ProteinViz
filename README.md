@@ -1,219 +1,133 @@
-# 🧬 EGCG Protein Interaction Research Dashboard
+<div align="center">
 
-A comprehensive Streamlit-based web application designed for researchers to query, visualize, and predict protein interactions with a focus on EGCG (Epigallocatechin gallate) compounds. This dashboard integrates machine learning capabilities with real-time data from multiple protein databases to provide insights into protein-protein interactions.
+# 🧬 ProteinViz
 
-## 📸 Screenshots
+**Explore disease pathways from genes to proteins, interactions, 3D structures and compounds, using only public data you can trace.**
 
-### Homepage
-![Homepage](homepage.png)
+[![CI](https://github.com/shekibahmed/ProteinViz/actions/workflows/ci.yml/badge.svg)](https://github.com/shekibahmed/ProteinViz/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13%20|%203.14-blue)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE)
+[![Data licences](https://img.shields.io/badge/data-CC%20BY%20%2F%20CC0%20%2F%20CC%20BY--SA-lightgrey)](DATA_LICENSES.md)
+[![Cite](https://img.shields.io/badge/cite-CITATION.cff-orange)](CITATION.cff)
 
-### 3D Protein Structures
-![3D Structures](3d_structures.png)
+</div>
 
-### Machine Learning Predictions
-![ML Predictions](ml_predictions.png)
+![Disease explorer](docs/assets/disease.png)
 
-## 🚀 Features
+ProteinViz helps researchers and the wider community start from **a disease** and find
+the **proteins and pathways behind it**. You can then see **how those proteins interact**,
+inspect **their 3D interfaces**, and check **which compounds and drugs already act on them**.
+It is a free, open-source front-end to Open Targets, STRING, UniProt, the PDB, AlphaFold DB and
+ChEMBL. **Every number links back to its source, and nothing is simulated.**
 
-### 📊 Data Visualization & Analysis
-- Interactive charts and graphs for protein interaction data
-- Support for filtering by species, disease context, and protein identifiers
-- Visualization of binding affinities and evidence categories
-- Comparative analysis of direct vs indirect protein effects
+> **For research and hypothesis generation only.** Associations, enrichments and in-vitro
+> activities are leads to test, not conclusions, and nothing here is medical advice.
 
+## What you can do
 
-### 🔬 3D Protein Structure Viewer
-- Interactive 3D visualization of protein structures from PDB and AlphaFold databases
-- Individual protein structure viewing with rotation and zoom capabilities
-- Side-by-side structure comparison for protein pairs
-- Integration with both experimental (PDB) and predicted (AlphaFold) structures
+| | Feature | Powered by |
+|---|---|---|
+| 🩺 | **Disease explorer:** top associated targets, shared KEGG/Reactome pathways, the interaction network among them, drugs by clinical stage, and highly associated targets with no drug yet | Open Targets · STRING |
+| 🕸️ | **Network & pathways:** the STRING neighbourhood of any protein, coloured by evidence type, with pathway and disease enrichment (FDR-controlled) | STRING v12.5 |
+| 🧬 | **Protein:** function, disease associations, Reactome pathways, domains, sequence properties | UniProt · Open Targets |
+| 🔬 | **Structure & interfaces:** AlphaFold models coloured by pLDDT, a PAE heatmap, experimentally solved complexes of a protein pair, and **interface residues computed from real coordinates** in an interactive Mol\* viewer | AlphaFold DB · RCSB PDB · gemmi · Mol\* |
+| 🍵 | **EGCG showcase:** green-tea catechin targets from ChEMBL ranked by evidence (with assay-interference caveats), then the pathways and diseases they point to | ChEMBL · STRING |
+| 📤 | **Your data:** paste a gene list or upload an interaction table and get the same pathway analysis | STRING |
 
+Pages have **shareable permalinks**, e.g. `/structure?a=TP53&b=MDM2` or
+`/disease?id=MONDO_0004975`, so you can put a view in a paper, a lab chat or a slide.
 
-### 🧠 Machine Learning Predictions
-- Advanced ML models for predicting protein-protein interactions
-- **Support for multiple algorithms**: Random Forest, SVM, Graph Neural Networks (GNNs), and advanced Graph Transformers.
-- Batch prediction capabilities for multiple protein pairs
-- Interface residue prediction for interaction sites
-- Confidence scoring and model explanations
+<table>
+<tr>
+<td><img src="docs/assets/structure.png" alt="Structure and interfaces"/></td>
+<td><img src="docs/assets/network.png" alt="Network and pathways"/></td>
+</tr>
+<tr>
+<td align="center"><sub>p53–MDM2 (PDB 1YCR): interface residues computed from coordinates</sub></td>
+<td align="center"><sub>TP53 STRING neighbourhood, coloured by strongest evidence channel</sub></td>
+</tr>
+</table>
 
+## Quick start
 
-### 🧬 Comprehensive Protein Information
-- Real-time protein sequence retrieval from UniProt
-- Detailed protein metadata including molecular weight, isoelectric point
-- Gene name mapping and protein family information
-- Integration with multiple protein databases
-
-
-### 📋 Data Management
-- Built-in data tables for direct and indirect protein interactions
-- CSV data import/export capabilities
-- Data validation and error handling
-- Support for custom datasets
-
-
-## 🗄️ Data Sources
-
-### Internal Datasets
-- **EGCG_Direct_Interactions.csv**: Direct protein-protein binding interactions
-  - Contains: protein, gene, interaction_type, affinity, evidence_category, species, disease_context
-- **EGCG_Indirect_Effects.csv**: Indirect protein effects and regulatory interactions
-  - Contains: protein, gene, effect_type, magnitude, evidence_category, species, disease_context
-
-### External APIs & Databases
-
-#### UniProt REST API
-- **Primary endpoint**: `https://rest.uniprot.org/uniprotkb/{protein_id}.fasta`
-- **Search endpoint**: `https://rest.uniprot.org/uniprotkb/search?query={protein_id}`
-- **Metadata endpoint**: `https://rest.uniprot.org/uniprotkb/{protein_id}.json`
-- **Purpose**: Protein sequence retrieval, metadata, and gene information
-
-#### RCSB Protein Data Bank (PDB)
-- **Endpoint**: `https://files.rcsb.org/download/{pdb_id}.pdb`
-- **Purpose**: Experimental protein structure data for 3D visualization
-
-#### AlphaFold Database
-- **Endpoint**: `https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb`
-- **Purpose**: AI-predicted protein structures for comprehensive coverage
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- Python 3.8+
-- Internet connection for API access
-
-### Dependencies
-The project uses the following key libraries:
-- **Streamlit**: Web application framework
-- **Pandas & NumPy**: Data manipulation and analysis
-- **Plotly**: Interactive visualizations
-- **Scikit-learn**: Machine learning models
-- **PyTorch**: Advanced neural network models
-- **BioPython**: Protein sequence analysis
-- **py3Dmol & stmol**: 3D molecular visualization
-- **Requests**: API communication
-- **OpenAI**: Integration for advanced ML capabilities
-
-### Running the Application
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd egcg-protein-dashboard
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the application**
-   ```bash
-   streamlit run app.py --server.port 5000
-   ```
-
-4. **Access the dashboard**
-   Open your browser and navigate to: `http://localhost:5000`
-
-### Configuration
-
-The application requires a `.streamlit/config.toml` file with the following configuration:
-
-```toml
-[server]
-headless = true
-address = "0.0.0.0"
-port = 5000
+```bash
+git clone https://github.com/shekibahmed/ProteinViz.git
+cd ProteinViz
+pip install -e ".[app]"        # or: uv sync --extra app
+proteinviz app                 # opens http://localhost:8501
 ```
 
-## 📱 Usage Guide
+There are no API keys, accounts or GPUs, and nothing costs money. All data sources are free public APIs, and
+responses are cached on disk (set `PROTEINVIZ_CACHE_DIR` to choose where).
 
-### Basic Navigation
-1. **Sidebar Controls**: Use the sidebar to filter data by protein identifiers, species, or disease contexts
-2. **Tab Navigation**: Switch between different functionalities using the main tabs
-3. **Interactive Elements**: Click buttons to trigger analyses, predictions, or data retrievals
+### Use it from Python
 
-### Workflow Examples
+The core library has no UI dependency, so you can use it in notebooks and pipelines:
 
-#### Protein Interaction Analysis
-1. Enter a protein identifier in the sidebar (e.g., "P53", "EGFR")
-2. Navigate to the "Visualizations" tab to see interaction patterns
-3. Use the "3D Structures" tab to visualize protein conformations
-4. Check "ML Predictions" for interaction probability predictions
+```python
+from proteinviz.sources import opentargets, string_db, rcsb
+from proteinviz.structure.interface import compute_interface
 
-#### Batch Analysis
-1. Prepare a CSV file with protein pairs (columns: protein_a, protein_b)
-2. Navigate to the "ML Predictions" tab
-3. Upload your CSV file for batch processing
-4. Download results with confidence scores and predictions
+ad = opentargets.disease_profile("MONDO_0004975")  # Alzheimer disease
+genes = [t.symbol for t in ad.targets]
+pathways = string_db.enrichment(genes).by_category("KEGG", "RCTM")
 
-## 🏗️ Technical Architecture
-
-### Frontend Architecture
-- **Framework**: Streamlit with reactive components
-- **Caching**: `@st.cache_data` decorators for performance optimization
-- **State Management**: Session state for user inputs and data persistence
-
-### Backend Architecture
-- **Modular Design**: Separate utility modules for different concerns
-  - `utils/data_loader.py`: CSV data handling with error management
-  - `utils/ml_models.py`: Machine learning model implementations
-  - `utils/protein_utils.py`: Protein sequence and metadata utilities
-  - `utils/viz_3d.py`: 3D visualization and structure handling
-
-### Machine Learning Models
-- **Random Forest**: For general protein interaction prediction
-- **Support Vector Machines (SVM)**: For high-dimensional feature analysis
-- **Graph Neural Networks**: For advanced interaction modeling
-- **Model Persistence**: Trained models saved as pickle files for quick loading
-
-### Data Pipeline
-1. **Data Loading**: CSV files loaded with pandas, fallback to empty DataFrames
-2. **API Integration**: Real-time data fetching with timeout and error handling
-3. **Feature Engineering**: Protein sequence features for ML model input
-4. **Caching Strategy**: Multiple levels of caching for API responses and model predictions
-
-## 🔧 Development
-
-### Project Structure
-```
-├── app.py                 # Main Streamlit application
-├── utils/
-│   ├── data_loader.py     # Data loading and CSV handling
-│   ├── ml_models.py       # Machine learning implementations
-│   ├── protein_utils.py   # Protein data utilities
-│   └── viz_3d.py          # 3D visualization functions
-├── data/
-│   ├── EGCG_Direct_Interactions.csv
-│   └── EGCG_Indirect_Effects.csv
-├── models/                # Saved ML models
-└── .streamlit/
-    └── config.toml        # Streamlit configuration
+ids, _ = rcsb.search_entries("P04637", "Q00987")  # p53 + MDM2 complexes
+iface = compute_interface(rcsb.download_mmcif(ids[0]), "A", "B", pdb_id=ids[0])
+print([f"{r.residue_name}{r.residue_number}" for r in iface.residues_b])
+# ['GLU17', 'THR18', 'PHE19', 'SER20', 'LEU22', 'TRP23', 'LEU25', 'LEU26', ...]
 ```
 
-### Adding New Features
-1. **New Data Sources**: Extend `data_loader.py` with additional CSV handling
-2. **ML Models**: Add new algorithms to `ml_models.py` with proper caching
-3. **Visualizations**: Enhance `viz_3d.py` or add new visualization utilities
-4. **API Integration**: Extend `protein_utils.py` for additional database APIs
+Every result is a typed [pydantic](https://docs.pydantic.dev) model with a `provenance` field
+(source, URL, version, retrieval time).
 
-## 📊 Performance Considerations
-- **Caching**: Extensive use of Streamlit caching for API calls and model loading
-- **Error Handling**: Robust fallback mechanisms for API failures
-- **Lazy Loading**: Models and data loaded only when needed
-- **Timeout Management**: API requests with appropriate timeout settings
+## Why another tool?
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit pull requests, create issues, or suggest new features for protein interaction analysis.
+The STRING website, Open Targets, the RCSB viewer and PDBsum are excellent, but each answers one
+question. ProteinViz **chains them into a single workflow**: disease → targets → pathways →
+network → structure → interface → compounds. It also keeps provenance across the whole chain and
+is open source, so you can script, extend or self-host it.
 
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Principles
 
-## 🙏 Acknowledgments
-- **UniProt**: For providing comprehensive protein data
-- **RCSB PDB**: For experimental protein structures
-- **AlphaFold**: For predicted protein structures
-- **Streamlit**: For the excellent web application framework
+1. **No fabricated output.** If a source fails or has no record, you are told so. Earlier
+   prototype versions of this repo contained simulated predictions; v0.2 removed all of them
+   (see [CHANGELOG](CHANGELOG.md)).
+2. **Provenance everywhere:** source, link, release and retrieval time are shown for each result.
+3. **Honest caveats** where the science needs them: knowledge bias in networks, crystal contacts
+   versus biological interfaces, and assay interference by polyphenols.
 
----
+## Roadmap
 
-*Built with ❤️ for the protein research community*
+- [x] **v0.2, honest relaunch:** live data only, disease explorer, Mol\* interfaces, evidence-tiered EGCG dataset, offline-reproducible tests
+- [ ] **v0.3, honest PPI prediction:** ESM-2 embeddings plus a classifier on the leakage-free Bernett et al. (2024) benchmark, with baselines and a model card
+- [ ] **v0.4:** PyPI release, an MCP server so AI assistants can query ProteinViz, Colab notebooks
+- [ ] **v1.0:** AlphaFold Server / Boltz-2 complex import, a precomputed EGCG co-folding gallery, a JOSS submission
+
+Ideas and requests: [open an issue](https://github.com/shekibahmed/ProteinViz/issues). Biologists'
+feedback is especially welcome.
+
+## Development
+
+```bash
+uv sync --extra dev
+uv run pytest                  # offline, uses recorded API responses in tests/fixtures/http
+PROTEINVIZ_LIVE=1 uv run pytest   # against the live APIs
+uv run ruff check . && uv run ruff format --check .
+```
+
+To refresh the EGCG dataset from the current ChEMBL release, run `python scripts/build_egcg_dataset.py`.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Citing
+
+If ProteinViz helps your work, please cite it (see [CITATION.cff](CITATION.cff)) **and** the
+resources it builds on: Open Targets, STRING, UniProt, RCSB PDB, AlphaFold DB, ChEMBL and Mol\*.
+See [DATA_LICENSES.md](DATA_LICENSES.md) for licences and references.
+
+## Acknowledgements and AI use
+
+ProteinViz exists because of the teams who maintain these open resources. Development used AI
+coding assistants under human direction; see [AI_USAGE.md](AI_USAGE.md).
+
+Code: [MIT](LICENSE). Bundled EGCG data: CC BY-SA 3.0 (derived from ChEMBL).

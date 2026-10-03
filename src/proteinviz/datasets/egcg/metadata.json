@@ -1,0 +1,14 @@
+{
+  "compound": "EPIGALOCATECHIN GALLATE",
+  "molecule_chembl_id": "CHEMBL297453",
+  "canonical_smiles": "O=C(O[C@@H]1Cc2c(O)cc(O)cc2O[C@@H]1c1cc(O)c(O)c(O)c1)c1cc(O)c(O)c(O)c1",
+  "standard_inchi_key": "WMBWREPUVVBILR-WIYYLYMNSA-N",
+  "chembl_release": "ChEMBL_37",
+  "chembl_release_date": "2026-05-01",
+  "built_at": "2026-10-02T23:48:16+00:00",
+  "n_activities": 1044,
+  "n_with_pchembl": 268,
+  "n_targets": 250,
+  "license": "CC BY-SA 3.0 (derived from ChEMBL)",
+  "source_url": "https://www.ebi.ac.uk/chembl/explore/compound/CHEMBL297453"
+}

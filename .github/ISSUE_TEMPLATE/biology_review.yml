@@ -1,0 +1,19 @@
+name: Biology review
+description: Flag a scientific issue, such as a misleading default, a missing caveat or a better source
+labels: [biology-review]
+body:
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is scientifically wrong or misleading?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / references
+      description: DOIs, PMIDs or database links.
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix
