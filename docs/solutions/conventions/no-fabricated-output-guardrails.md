@@ -78,7 +78,7 @@ except Exception as e:
 ```
 After (v0.2): the core raises, the page explains.
 ```python
-rec = c.attempt(c.protein, q)   # shows "Not found: …" or "source unavailable" in the UI
+rec = c.attempt(c.protein, q)  # shows "Not found: …" or "source unavailable" in the UI
 if rec is None:
     st.stop()
 ```

@@ -42,15 +42,15 @@ selects one of three modes at module level, before tests are collected:
 ```python
 LIVE = os.environ.get("PROTEINVIZ_LIVE") == "1"
 RECORD = os.environ.get("PROTEINVIZ_RECORD") == "1"
-if LIVE:                                   # fresh temp cache, real APIs
+if LIVE:  # fresh temp cache, real APIs
     os.environ["PROTEINVIZ_CACHE_DIR"] = tempfile.mkdtemp(prefix="proteinviz-live-")
     os.environ.pop("PROTEINVIZ_OFFLINE", None)
-else:                                      # committed fixtures
+else:  # committed fixtures
     os.environ["PROTEINVIZ_CACHE_DIR"] = str(FIXTURES)
     if RECORD:
-        os.environ.pop("PROTEINVIZ_OFFLINE", None)   # fill in missing responses
+        os.environ.pop("PROTEINVIZ_OFFLINE", None)  # fill in missing responses
     else:
-        os.environ["PROTEINVIZ_OFFLINE"] = "1"       # default: deterministic, offline
+        os.environ["PROTEINVIZ_OFFLINE"] = "1"  # default: deterministic, offline
 ```
 
 A weekly workflow runs the same suite with `PROTEINVIZ_LIVE=1`

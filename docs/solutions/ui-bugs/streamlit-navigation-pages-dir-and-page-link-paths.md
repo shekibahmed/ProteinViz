@@ -51,7 +51,8 @@ default-page gotcha is covered in Solution step 3):
 2. **Define pages once and link to `st.Page` objects, not file-path strings.**
    `src/proteinviz/app/navigation.py` holds the single table of pages:
    ```python
-   VIEWS = Path(__file__).parent / "views"          # absolute, independent of the entry script
+   VIEWS = Path(__file__).parent / "views"  # absolute, independent of the entry script
+
 
    def page(name: str) -> st.Page:
        title, icon, url_path, _ = PAGES[name]
