@@ -1,0 +1,14 @@
+name: Feature request
+description: Suggest a workflow, data source or visualisation
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What research question are you trying to answer?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?

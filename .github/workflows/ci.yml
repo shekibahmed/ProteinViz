@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --extra dev ruff check .
+      - run: uv run --extra dev ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Test (offline, recorded responses)
+        run: uv run --extra dev pytest --cov=proteinviz --cov-report=term-missing
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build image
+        run: docker build -t proteinviz .
+      - name: Smoke-test container
+        run: |
+          docker run -d --name pv -p 7860:7860 proteinviz
+          for i in $(seq 1 30); do curl -sf http://localhost:7860/_stcore/health && exit 0; sleep 2; done
+          docker logs pv; exit 1

@@ -1,0 +1,21 @@
+name: Live API check
+
+# Runs the test-suite against the real APIs weekly to catch upstream format changes
+# (e.g. AlphaFold DB / PDBe API revisions) that recorded fixtures would hide.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --extra dev pytest -q
+        env:
+          PROTEINVIZ_LIVE: "1"
