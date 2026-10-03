@@ -51,6 +51,6 @@ The original prototype was generated with an AI coding agent on Replit. Version 
 with AI assistance (Claude Code) under human direction. Fabricated components were removed, and
 every data path was checked against live sources. See `AI_USAGE.md`.
 
-[GitHub repository](https://github.com/shekibahmed/ProteinViz) · issues and contributions welcome.
+[GitHub repository](https://github.com/shekibahmed/ProteinViz) · [live app](https://proteinviz.streamlit.app) · issues and contributions welcome.
 """
 )

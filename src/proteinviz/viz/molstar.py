@@ -14,7 +14,7 @@ def _require():
     try:
         import molviewspec as mvs
     except ImportError as exc:  # pragma: no cover - exercised only without the extra
-        raise ImportError("Install the app extra: pip install 'proteinviz[app]'") from exc
+        raise ImportError("molviewspec is missing: pip install proteinviz") from exc
     return mvs
 
 

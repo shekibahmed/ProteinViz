@@ -42,3 +42,22 @@ jobs:
           docker run -d --name pv -p 7860:7860 proteinviz
           for i in $(seq 1 30); do curl -sf http://localhost:7860/_stcore/health && exit 0; sleep 2; done
           docker logs pv; exit 1
+
+  cloud-install:
+    # Mirrors Streamlit Community Cloud, which installs from uv.lock without extras.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --no-dev
+      - name: App dependencies importable and entry point renders
+        run: |
+          uv run --no-sync python -c "import streamlit, molviewspec, plotly, openpyxl, proteinviz"
+          uv run --no-sync python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+          at = AppTest.from_file("streamlit_app.py", default_timeout=60).run()
+          assert not at.exception, [e.value for e in at.exception]
+          print("Community Cloud entry point renders")
+          PY

@@ -9,6 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE)
 [![Data licences](https://img.shields.io/badge/data-CC%20BY%20%2F%20CC0%20%2F%20CC%20BY--SA-lightgrey)](DATA_LICENSES.md)
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-orange)](CITATION.cff)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://proteinviz.streamlit.app)
 
 </div>
 
@@ -50,14 +51,17 @@ Pages have **shareable permalinks**, e.g. `/structure?a=TP53&b=MDM2` or
 
 ## Try it online
 
-**Live demo:** _coming soon on Streamlit Community Cloud_ (free; see [docs/DEPLOY.md](docs/DEPLOY.md)).
+**Live demo: <https://proteinviz.streamlit.app>.** It's free, with no sign-up. Try
+[Alzheimer disease](https://proteinviz.streamlit.app/disease?id=MONDO_0004975&q=Alzheimer+disease) or the
+[p53–MDM2 interface](https://proteinviz.streamlit.app/structure?a=TP53&b=MDM2).
+The app sleeps when idle, so the first load can take about 30 s.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/shekibahmed/ProteinViz.git
 cd ProteinViz
-pip install -e ".[app]"        # or: uv sync --extra app
+pip install -e .               # or: uv sync
 proteinviz app                 # opens http://localhost:8501
 ```
 
