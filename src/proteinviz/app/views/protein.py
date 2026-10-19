@@ -2,8 +2,10 @@ import pandas as pd
 import streamlit as st
 
 from proteinviz.app import common as c
+from proteinviz.app.navigation import page
 from proteinviz.sequence import properties
 
+c.path_label("protein")
 c.page_header("🧬 Protein", "Function, disease links, pathways and structures for one protein.")
 
 q = st.text_input("Gene symbol or UniProt accession (human by default)", value=c.param("q", "TP53"))
@@ -31,8 +33,10 @@ m[4].metric("PDB entries", len(rec.pdb_ids))
 st.caption(f"Computed from the UniProt sequence with {props.method}.")
 
 g = rec.primary_gene or rec.accession
+go_net, go_struct = st.columns(2)
+go_net.page_link(page("network"), label="Network & pathways", query_params={"q": g})
+go_struct.page_link(page("structure"), label="Structure", query_params={"a": g})
 st.markdown(
-    f"**Go to:** [Network & pathways](./network?q={g}) · [Structure](./structure?a={g}) · "
     f"[Open Targets](https://platform.opentargets.org/search?q={g}) · "
     f"[STRING](https://string-db.org/network/9606.{g})"
 )

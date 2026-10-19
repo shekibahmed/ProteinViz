@@ -5,7 +5,12 @@ toolbarMode = "viewer"
 gatherUsageStats = false
 
 [theme]
+base = "light"
 primaryColor = "#4C78A8"
+backgroundColor = "#F7F5F2"
+secondaryBackgroundColor = "#EEF3F8"
+textColor = "#1F2933"
+font = "sans serif"
 
 [server]
 headless = true
