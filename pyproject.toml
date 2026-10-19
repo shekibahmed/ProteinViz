@@ -57,6 +57,10 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.8",
     "pre-commit>=4.0",
+    # README diagrams only. Community Cloud installs the lockfile without extras.
+    "pillow>=11",
+    "imageio>=2.36",
+    "imageio-ffmpeg>=0.5",
 ]
 
 [project.scripts]

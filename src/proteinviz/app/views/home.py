@@ -3,6 +3,7 @@ import streamlit as st
 from proteinviz.app import common as c
 from proteinviz.app.navigation import page
 
+c.path_label("home")
 st.title("🧬 ProteinViz")
 st.markdown(
     "#### Explore disease pathways from genes to proteins, interactions, 3D structures and compounds."
@@ -35,20 +36,20 @@ with c3:
 
 st.divider()
 st.subheader("Try a worked example")
-e1, e2, e3 = st.columns(3)
-e1.page_link(
+st.page_link(
     page("disease"),
     label="Alzheimer disease → targets & pathways",
     icon="➡️",
-    query_params={"id": "MONDO_0004975"},
+    query_params={"id": "MONDO_0004975", "q": "Alzheimer disease"},
 )
-e2.page_link(
+st.page_link(
     page("structure"),
     label="p53 · MDM2 interface (1YCR)",
     icon="➡️",
     query_params={"a": "TP53", "b": "MDM2", "pdb": "1YCR"},
 )
-e3.page_link(page("egcg"), label="Green-tea EGCG: evidence-tiered targets", icon="➡️")
+st.page_link(page("egcg"), label="Green-tea EGCG: evidence-tiered targets", icon="➡️")
+st.page_link(page("upload"), label="Your data", icon="➡️")
 
 st.divider()
 st.markdown(

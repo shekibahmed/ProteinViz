@@ -8,6 +8,7 @@ from proteinviz.structure.interface import compute_interface, contacting_chain_p
 from proteinviz.viz.molstar import alphafold_scene, complex_scene
 from proteinviz.viz.plots import pae_heatmap
 
+c.path_label("structure")
 c.page_header(
     "🔬 Structure & interfaces",
     "Predicted structure confidence from AlphaFold DB, experimentally solved complexes from the "
@@ -16,8 +17,13 @@ c.page_header(
 )
 
 c1, c2, c3 = st.columns([2, 2, 1])
-a_q = c1.text_input("Protein A (gene or UniProt)", value=c.param("a", "TP53"))
-b_q = c2.text_input("Protein B (optional, finds complexes)", value=c.param("b", "MDM2"))
+# A bare visit keeps the p53–MDM2 demo. A permalink that names only one side
+# must not invent the other: MDM2 is the demo partner, not a default substitute.
+explicit = any(key in st.query_params for key in ("a", "b", "pdb"))
+a_q = c1.text_input("Protein A (gene or UniProt)", value=c.param("a", "" if explicit else "TP53"))
+b_q = c2.text_input(
+    "Protein B (optional, finds complexes)", value=c.param("b", "" if explicit else "MDM2")
+)
 pdb_q = c3.text_input("PDB ID (optional)", value=c.param("pdb", ""))
 c.set_params(a=a_q, b=b_q, pdb=pdb_q)
 
@@ -109,6 +115,14 @@ def complexes_tab():
         for x, y, _ in pairs
         if (x in chains_a and y in chains_b) or (y in chains_a and x in chains_b)
     ]
+    if pdb_q and rec_a and rec_b and not candidate:
+        name_a = rec_a.primary_gene or rec_a.accession
+        name_b = rec_b.primary_gene or rec_b.accession
+        st.warning(
+            f"{entry.pdb_id} has no deposited contact between {name_a} and {name_b}. "
+            "Another chain pair from this entry is not shown in its place."
+        )
+        return
     options = candidate or [(x, y) for x, y, _ in pairs]
     if not options:
         st.info("No contacting protein chains in this entry.")

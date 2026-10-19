@@ -2,9 +2,11 @@ import pandas as pd
 import streamlit as st
 
 from proteinviz.app import common as c
+from proteinviz.app.navigation import page
 from proteinviz.viz.network import network_figure
 from proteinviz.viz.plots import enrichment_bar
 
+c.path_label("disease")
 c.page_header(
     "🩺 Disease explorer",
     "Find the proteins most strongly linked to a disease, the pathways they share, how they "
@@ -50,11 +52,28 @@ approved = sum(1 for d in profile.drugs if d.max_stage == "APPROVAL")
 m3.metric("Approved drugs", approved)
 c.provenance_caption(profile.provenance)
 
+symbols = [t.symbol for t in profile.targets]
+if len(symbols) >= 2:
+    st.subheader("Next: look at an interface")
+    st.caption(
+        "Pick two of these targets. Structure opens that pair and does not guess a PDB entry."
+    )
+    pair_a, pair_b, pair_go = st.columns([2, 2, 2])
+    gene_a = pair_a.selectbox("Protein A", symbols, index=0)
+    gene_b = pair_b.selectbox("Protein B", symbols, index=1)
+    if gene_a == gene_b:
+        pair_go.info("Choose two different proteins.")
+    else:
+        pair_go.page_link(
+            page("structure"),
+            label=f"Open {gene_a} · {gene_b}",
+            query_params={"a": gene_a, "b": gene_b},
+        )
+
 tab_t, tab_p, tab_n, tab_d = st.tabs(
     ["Top targets", "Shared pathways", "Interaction network", "Drugs"]
 )
 
-symbols = [t.symbol for t in profile.targets]
 with tab_t:
     df = pd.DataFrame(
         [

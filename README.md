@@ -49,6 +49,16 @@ Pages have **shareable permalinks**, e.g. `/structure?a=TP53&b=MDM2` or
 </tr>
 </table>
 
+## How the workflow moves
+
+The disease page holds the targets, the shared pathways, the interactions among those targets, and the known drugs. Structure is the next step, for a pair you choose. Network is an optional door.
+
+![Disease path: targets, pathways, interactions, and drugs, then structure](docs/assets/disease-path.gif)
+
+![Structure path: a chosen pair, an experimental complex, and geometric interface residues](docs/assets/structure-path.gif)
+
+[Watch the illustrated tour of every page](docs/assets/tour.mp4): Home, Disease explorer, Network and pathways, Protein, Structure and interfaces, EGCG, Upload, and About. The tour is a diagram, not a screen recording, and the app does not show it.
+
 ## Try it online
 
 **Live demo: <https://proteinviz.streamlit.app>.** It's free, with no sign-up. Try
@@ -92,8 +102,9 @@ Every result is a typed [pydantic](https://docs.pydantic.dev) model with a `prov
 ## Why another tool?
 
 The STRING website, Open Targets, the RCSB viewer and PDBsum are excellent, but each answers one
-question. ProteinViz **chains them into a single workflow**: disease → targets → pathways →
-network → structure → interface → compounds. It also keeps provenance across the whole chain and
+question. ProteinViz **chains them into a single workflow**: the disease page (targets, pathways,
+interactions, and drugs) and then structure and interface. Network is an optional door.
+It also keeps provenance across the whole chain and
 is open source, so you can script, extend or self-host it.
 
 ## Principles

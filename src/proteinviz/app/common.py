@@ -92,3 +92,26 @@ def protein_link(symbol: str, label: str | None = None) -> str:
 def page_header(title: str, intro: str) -> None:
     st.title(title)
     st.markdown(intro)
+
+
+def path_label(current: str) -> None:
+    """Name where this page sits on the disease-to-structure path.
+
+    The label is not a trail: each page is linked on its own, and a direct
+    permalink still works. Network is an alternate door, not a required hop.
+    """
+    from proteinviz.app.navigation import page
+
+    steps = (
+        ("disease", "Disease"),
+        ("protein", "Protein"),
+        ("structure", "Structure"),
+        ("network", "Network"),
+    )
+    cols = st.columns(len(steps))
+    for col, (name, label) in zip(cols, steps, strict=True):
+        with col:
+            if name == current:
+                st.markdown(f"**{label}**")
+            else:
+                st.page_link(page(name), label=label)
